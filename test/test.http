@@ -1,0 +1,33 @@
+
+get http://127.0.0.1:5000/api/scores?pw=secret
+
+###
+
+post http://127.0.0.1:5000/api/scores?pw=secret
+content-type: application/json
+
+{ "score": 5, "name": "Jussi" }
+
+###
+
+get http://127.0.0.1:5000/api/scores/1?pw=secret
+
+###
+
+get http://127.0.0.1:5000/api/scores?limit=10&pw=secret
+
+###
+
+get http://127.0.0.1:5000/api/scores?sort=asc&pw=secret
+
+###
+
+get http://127.0.0.1:5000/api/scores?sort=desc&pw=secret
+
+###
+
+get http://127.0.0.1:5000/api/scores?sort=desc&limit=10&pw=secret
+
+###
+
+delete http://127.0.0.1:5000/api/scores/1?pw=secret
