@@ -1,5 +1,10 @@
-def main():
-    """The main function that starts the app"""
-    print("hello world"))
+from flask import Flask
 
-main()
+app = Flask(__name__)
+
+@app.route("/")
+def root():
+    return "<h1>hello</h1>"
+
+if __name__ == "__main__":
+    app.run()
