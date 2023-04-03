@@ -1,0 +1,9 @@
+RELEASE 1
+- Fetching all highscores
+- Fetching highscore based on player id
+- Fetching highscores with limit (100 is the max limit by default)
+- Fetching all scores with ascending or descending order
+- Adding a new score
+- Deleting highscore (and resetting all level highscores to 0) by player id
+- Displaying high scores in html file format in a browser
+- Creating new player (account)
