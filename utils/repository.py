@@ -28,15 +28,13 @@ def fetch_highscores(limit = 100, sort="none"):
     # 100 is the default limit
     if limit > 100 or limit <= 0:
         limit = 100
-    if type(limit) != int:
-        limit = 100
     # if sort is not "none", "asc", or "desc", then it will be "none"
     # by default
     if sort != "none":
         if sort != "asc":
             if sort != "desc":
                 sort= "none"
-    print(sort)
+    #print(sort)
     highscores = []
     # the loads function converts json to a python object,
     # in this case to a list
@@ -44,7 +42,7 @@ def fetch_highscores(limit = 100, sort="none"):
     # this variable determines wether the max range of list objects
     # is the limit or length of the list, dependent on wether the limit
     # is greater than the length of the list or not
-    max_range = len(content) if limit > len(content) else limit - 1
+    max_range = len(content) if limit > len(content) else limit
     match sort:
         # we want to return a list of dicts, 
         # with each dict object containing only name and highscore

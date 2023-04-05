@@ -69,7 +69,9 @@ def create_new_account():
     players_list = json.loads(read_database())
     for player_data in players_list:
         if player_data['name'] == sent_data['name']:
-            return make_response("", 409)
+            return make_response(jsonify({"error": "Name already exists"}), 409)
+        if player_data['email'] == sent_data['email']:
+            return make_response(jsonify({"error": "Email already exists"}), 409)
     # if username is unique, new player data can be constructed
     id = len(players_list) + 1
     new_player = {"id": id, "name": sent_data['name'], "email": sent_data['email'], "level_highscores": [0, 0, 0, 0], "highscore": 0}
@@ -79,7 +81,13 @@ def create_new_account():
 
 @app.route('/highscores')
 def show_highscores():
-    highscores = fetch_highscores()
+    limit = 100
+    sort = "none"
+    if request.args.get("sort") != None:
+        sort = request.args.get("sort")
+    if request.args.get("limit") != None:
+        limit = int(request.args.get("limit"))
+    highscores = fetch_highscores(limit, sort)
     return render_template("highscores.html", highscores=highscores)
 
 if __name__ == "__main__":
