@@ -54,19 +54,21 @@ def fetch_highscores(limit = 100, sort="none"):
                 highscores.append(player_and_highscore)
             return highscores
         case "asc":
+            sorted_highscores = sorted(content, key=lambda d: d['highscore'])
             for i in range(0, max_range):
                 player_and_highscore = {}
-                player_and_highscore['player'] = content[i]['name']
-                player_and_highscore['highscore'] = content[i]['highscore']
+                player_and_highscore['player'] = sorted_highscores[i]['name']
+                player_and_highscore['highscore'] = sorted_highscores[i]['highscore']
                 highscores.append(player_and_highscore)
-            return sorted(highscores, key=lambda d: d['highscore'])
+            return highscores
         case "desc":
+            sorted_highscores = sorted(content, key=lambda d: d['highscore'], reverse=True)
             for i in range(0, max_range):
                 player_and_highscore = {}
-                player_and_highscore['player'] = content[i]['name']
-                player_and_highscore['highscore'] = content[i]['highscore']
+                player_and_highscore['player'] = sorted_highscores[i]['name']
+                player_and_highscore['highscore'] = sorted_highscores[i]['highscore']
                 highscores.append(player_and_highscore)
-            return sorted(highscores, key=lambda d: d['highscore'], reverse=True)
+            return highscores
 
 def fetch_player_data(id):
     if type(id) != int:
