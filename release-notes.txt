@@ -7,3 +7,8 @@ RELEASE 1
 - Deleting highscore (and resetting all level highscores to 0) by player id
 - Displaying high scores in html file format in a browser
 - Creating new player (account)
+
+RELEASE 2
+- Password protection for the requests implemented
+- Unit tests for repository module
+- Documentation for repository module

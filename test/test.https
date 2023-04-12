@@ -1,0 +1,34 @@
+###
+
+get https://127.0.0.1:5000/api/highscores?pw=secret
+
+###
+
+post https://127.0.0.1:5000/api/highscores?pw=secret
+content-type: application/json
+
+{ "score": 5, "name": "Jussi" }
+
+###
+
+get https://127.0.0.1:5000/api/highscores/1?pw=secret
+
+###
+
+get https://127.0.0.1:5000/api/highscores?limit=10&pw=secret
+
+###
+
+get https://127.0.0.1:5000/api/highscores?sort=asc&pw=secret
+
+###
+
+get https://127.0.0.1:5000/api/highscores?sort=desc&pw=secret
+
+###
+
+get https://127.0.0.1:5000/api/highscores?sort=desc&limit=10&pw=secret
+
+###
+
+delete https://127.0.0.1:5000/api/highscores/1?pw=secret
