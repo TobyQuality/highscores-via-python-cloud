@@ -1,6 +1,7 @@
 from flask import *
 # from flask import request, redirect, url_for
 from json import *
+from dotenv import load_dotenv
 import os
 import bcrypt
 
@@ -16,19 +17,8 @@ app = Flask(__name__)
         #url = request.url.replace('http://', 'https://', 1)
         #return redirect(url, code=301)
 
-# since using dontenv module to
-# load the .env file containing the api key for the 
-# creates problems when deploying the app to Render,
-# the .env contents need to be loaded manually
-with open('.env') as file:
-    for line in file:
-        # Skip empty lines
-        if line.strip():
-            continue
-        # Split the line into name and value
-        name, value = line.strip().split('=', 1)
-        # Set the environment variable
-        os.environ[name] = value
+# loading the .env file containing the api key for the app
+load_dotenv()
 # accessing the api key
 API_KEY = os.environ.get('API_KEY')
 
