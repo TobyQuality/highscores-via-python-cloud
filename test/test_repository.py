@@ -1,7 +1,7 @@
 import os
 import unittest
 from unittest.mock import mock_open, patch
-from ..utils.repository import open_file, read_database, fetch_highscores, fetch_player_data
+from utils.repository import open_file, read_database, fetch_highscores, fetch_player_data
 
 class TestRepositoryFunctions(unittest.TestCase):
 
