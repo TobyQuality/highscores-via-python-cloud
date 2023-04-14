@@ -1,4 +1,4 @@
 Flask
 Gunicorn
-Dotenv
-Bcrypt
+python-dotenv
+bcrypt
