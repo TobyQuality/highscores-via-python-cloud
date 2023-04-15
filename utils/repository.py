@@ -65,32 +65,31 @@ def fetch_highscores(limit = 100, sort="none"):
     # is the limit or length of the list, dependent on whether the limit
     # is greater than the length of the list or not
     max_range = len(content) if limit > len(content) else limit
-    match sort:
-        # we want to return a list of dicts, 
-        # with each dict object containing only name and highscore
-        case "none":
-            for i in range(0, max_range):
-                player_and_highscore = {}
-                player_and_highscore['player'] = content[i]['name']
-                player_and_highscore['highscore'] = content[i]['highscore']
-                highscores.append(player_and_highscore)
-            return highscores
-        case "asc":
-            sorted_highscores = sorted(content, key=lambda d: d['highscore'])
-            for i in range(0, max_range):
-                player_and_highscore = {}
-                player_and_highscore['player'] = sorted_highscores[i]['name']
-                player_and_highscore['highscore'] = sorted_highscores[i]['highscore']
-                highscores.append(player_and_highscore)
-            return highscores
-        case "desc":
-            sorted_highscores = sorted(content, key=lambda d: d['highscore'], reverse=True)
-            for i in range(0, max_range):
-                player_and_highscore = {}
-                player_and_highscore['player'] = sorted_highscores[i]['name']
-                player_and_highscore['highscore'] = sorted_highscores[i]['highscore']
-                highscores.append(player_and_highscore)
-            return highscores
+    # we want to return a list of dicts, 
+    # with each dict object containing only name and highscore
+    if sort == "none":
+        for i in range(0, max_range):
+            player_and_highscore = {}
+            player_and_highscore['player'] = content[i]['name']
+            player_and_highscore['highscore'] = content[i]['highscore']
+            highscores.append(player_and_highscore)
+        return highscores
+    if sort == "asc":
+        sorted_highscores = sorted(content, key=lambda d: d['highscore'])
+        for i in range(0, max_range):
+            player_and_highscore = {}
+            player_and_highscore['player'] = sorted_highscores[i]['name']
+            player_and_highscore['highscore'] = sorted_highscores[i]['highscore']
+            highscores.append(player_and_highscore)
+        return highscores
+    if sort == "desc":
+        sorted_highscores = sorted(content, key=lambda d: d['highscore'], reverse=True)
+        for i in range(0, max_range):
+            player_and_highscore = {}
+            player_and_highscore['player'] = sorted_highscores[i]['name']
+            player_and_highscore['highscore'] = sorted_highscores[i]['highscore']
+            highscores.append(player_and_highscore)
+        return highscores
 
 def fetch_player_data(id):
     """
