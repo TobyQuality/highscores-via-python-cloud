@@ -5,10 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Risky Cargo Highscores</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="../static/styles.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <div class="container">
         <h1 class="text-center mt-4 mb-4">Risky Cargo Highscores</h1>
+        <div>
+            <form action="/highscores">
+                <div class="form-group">
+                    <label for="limit">Set limit for highscores</label>
+                    <select id="limit" name="limit" class="form-control">
+                        <option value=100>100</option>
+                        <option value=90>90</option>
+                        <option value=80>80</option>
+                        <option value=70>70</option>
+                        <option value=60>60</option>
+                        <option value=50>50</option>
+                        <option value=40>40</option>
+                        <option value=30>30</option>
+                        <option value=20>20</option>
+                        <option value=10>10</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sort">Set sorting order for highscores</label>
+                    <select id="sort" name="sort" class="form-control">
+                        <option value="desc">descending</option>
+                        <option value="asc">ascending</option>
+                        <option value="none">no sorting order</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary">Set list order</button>
+            </form>
+        </div>
         <div class="row">
             <div class="col-md-12">
                 <table class="table table-striped">

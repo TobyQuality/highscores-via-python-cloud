@@ -1,0 +1,22 @@
+body {
+    background-image: url('sunnybeach.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.container {
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 5px;
+    padding: 20px;
+    margin-top: 100px;
+    margin-bottom: 0;
+}
+
+label, th, td {
+    font-weight: bold;
+}

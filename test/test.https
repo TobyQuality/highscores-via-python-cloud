@@ -1,6 +1,6 @@
 ###
 
-get https://risky-cargo-highscores.onrender.com/pw=monkeyisland
+get https://127.0.0.1:5000/api/highscores?pw=secret
 
 ###
 
