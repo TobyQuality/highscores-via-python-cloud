@@ -60,16 +60,15 @@ def add_highscore():
     pw = request.args.get("pw")
     if (check_api_key(pw) == False):
         return make_response(jsonify("You are unauthorized"), 401)
-    # the data sent via post request is e.g. {'id': 1, 'name': 'dummy', 'level': 1, 'score': 100}
+    # the data sent via post request is e.g. {'id': 1, 'name': 'dummy', level_highscores: [10,20,40,50], 'score': 100}
     sent_data = json.loads(request.data)
     # first we have to make sure that the score that's being sent
     # is greater than the current highscore of the level. First the player data is fetched
     players_data = fetch_player_data(sent_data['id'])
     # the player's new level score has to be measured against the current level highscore
-    level_highscore = players_data['level_highscores'][sent_data['level'] - 1]
     # if the new score is greater, then it will be saved in the json file
-    if sent_data['score'] > level_highscore:
-        save_highscore(sent_data['name'], sent_data['level'], sent_data['score'])
+    if sent_data['overall_highscore'] > players_data['highscore']:
+        save_highscore(sent_data['name'], sent_data['overall_highscore'])
         return make_response("", 201)
     else:
         # even if the score didn't update, a status code 200 is sent to

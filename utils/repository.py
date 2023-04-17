@@ -115,7 +115,7 @@ def fetch_player_data(id):
             break
     return player_data
 
-def save_highscore(name, level, level_highscore):
+def save_highscore(name, overall_highscore):
     """
     This function saves the highscore for a specific player and level in the database.
     
@@ -136,14 +136,10 @@ def save_highscore(name, level, level_highscore):
         if data['name'] == name:
             # once the player is found, the index of the list 'level_highscores' 
             # is determined by level number minus one due to list index starting from 0.
-            data['level_highscores'][level - 1] = level_highscore
             # after level highscore has been updated,
             # the overall highscore of all levels, contained in the property
             # 'highscore', has to be updated.
-            highscore = 0
-            for i in range(len(data['level_highscores'])):
-                highscore += data['level_highscores'][i]
-            data['highscore'] = highscore
+            data['highscore'] = overall_highscore
             break
     # Once out of the for loop, overwriting the json file can proceed
     # The list data inside variable 'content' has to be stringified before
@@ -166,8 +162,6 @@ def delete_score_by_id(id):
         raise Exception('Give integer type of id')
     player_data = fetch_player_data(id)
     player_data['highscore'] = 0
-    for i in range(len(player_data['level_highscores'])):
-        player_data['level_highscores'][i] = 0
     player_data_list = json.loads(read_database())
     for i in range(len(player_data_list)):
         if player_data_list[i]['id'] == id:
