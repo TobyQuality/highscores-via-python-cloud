@@ -108,7 +108,7 @@ def fetch_player_data(id):
     # it will be dealt with in index.py
     # with an appropriate response
     player_data = None
-    content = json.loads(read_database())
+    content = json.loads(read_database().strip())
     for data in content:
         if data['id'] == id:
             player_data = data

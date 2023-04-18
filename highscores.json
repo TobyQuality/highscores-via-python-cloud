@@ -1,57 +1,14 @@
 [
-  {
-    "id": 1,
-    "name": "dummy",
-    "email": "dummy@email.com",
-    "level_highscores": [0, 0, 0, 0],
-    "highscore": 150
-  },
+  { "id": 1, "name": "dummy", "email": "dummy@email.com", "highscore": 100 },
   {
     "id": 2,
     "name": "anotherDummy",
     "email": "anotherdummy@email.com",
     "highscore": 90
   },
-  {
-    "id": 3,
-    "name": "john",
-    "email": "john@gmail.com",
-    "level_highscores": [0, 0, 0, 0],
-    "highscore": 0
-  },
-  {
-    "id": 4,
-    "name": "james",
-    "email": "james@gmail.com",
-    "level_highscores": [0, 0, 0, 0],
-    "highscore": 0
-  },
-  {
-    "id": 5,
-    "name": "jim",
-    "email": "jim@gmail.com",
-    "level_highscores": [0, 0, 0, 0],
-    "highscore": 0
-  },
-  {
-    "id": 6,
-    "name": "jussi",
-    "email": "jussi@gmail.com",
-    "level_highscores": [0, 0, 0, 0],
-    "highscore": 0
-  },
-  {
-    "id": 7,
-    "name": "jessi",
-    "email": "jessi@gmail.com",
-    "level_highscores": [0, 0, 0, 0],
-    "highscore": 0
-  }
-  {
-    "id": 8,
-    "name": "essi",
-    "email": "essi@gmail.com",
-    "level_highscores": [0, 0, 0, 0],
-    "highscore": 0
-  }
+  { "id": 3, "name": "john", "email": "john@gmail.com", "highscore": 0 },
+  { "id": 4, "name": "james", "email": "james@gmail.com", "highscore": 0 },
+  { "id": 5, "name": "jim", "email": "jim@gmail.com", "highscore": 0 },
+  { "id": 6, "name": "jussi", "email": "jussi@gmail.com", "highscore": 0 },
+  { "id": 7, "name": "jessi", "email": "jessi@gmail.com", "highscore": 0 }
 ]

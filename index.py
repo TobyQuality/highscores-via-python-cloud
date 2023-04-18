@@ -109,7 +109,7 @@ def create_new_account():
             return make_response(jsonify({"error": "Email already exists"}), 409)
     # if username is unique, new player data can be constructed
     id = len(players_list) + 1
-    new_player = {"id": id, "name": sent_data['name'], "email": sent_data['email'], "level_highscores": [0, 0, 0, 0], "highscore": 0}
+    new_player = {"id": id, "name": sent_data['name'], "email": sent_data['email'], "highscore": 0}
     add_new_player(new_player)
     # the new player info is sent back to the game
     return make_response(jsonify(new_player), 200)

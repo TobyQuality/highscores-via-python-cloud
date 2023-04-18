@@ -6,7 +6,7 @@ get http://127.0.0.1:5000/highscores?pw=monkeyisland
 post http://127.0.0.1:5000/api/highscores?pw=monkeyisland
 content-type: application/json
 
-{"id": 1, "name": "dummy", "overall_highscore": 100}
+{"id": 1, "name": "dummy", "overall_highscore": 500}
 
 ###
 
