@@ -56,7 +56,7 @@ def fetch_highscores(limit = 100, sort="desc"):
     if sort != "desc":
         if sort != "asc":
             if sort != "none":
-                sort= "desc"
+                sort = "desc"
     # highscored variable is used for returning a list object.
     # It is specifically needed, because int given as parameter will limit
     # the number of objects that will be returned from json file,
@@ -126,6 +126,10 @@ def save_highscore(name, overall_highscore):
     Returns:
         None
     """
+    if type(name) != str:
+        raise Exception("Give string object as name")
+    if type(overall_highscore) != int:
+        raise Exception("Give int as highscore")
     content = json.loads(read_database())
     # new highscore id is array length + 1
     id = len(content) + 1

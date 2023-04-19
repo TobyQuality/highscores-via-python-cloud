@@ -12,3 +12,9 @@ RELEASE 2
 - Password protection for the requests implemented
 - Unit tests for repository module
 - Documentation for repository module
+
+RELEASE 3
+- Removed player account functionality
+- Refactored deleting function
+- The highscores webpage now has buttons for limit and sort
+- Save highscore function now utilizes simple name validation

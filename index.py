@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import os
 import bcrypt
 from utils.repository import *
+from utils.validator import *
 
 app = Flask(__name__)
 
@@ -15,8 +16,6 @@ API_KEY = os.environ.get('API_KEY')
 # this method is used to check the validity of the password
 # sent with requests to the backend
 def check_api_key(pw):
-    if type(pw) != str:
-        raise Exception("Give password as string object")
     # hashing the API_KEY that has been turned to bytes array
     # with randomly generated salt
     hash = bcrypt.hashpw(API_KEY.encode('utf-8'), bcrypt.gensalt())
@@ -61,6 +60,8 @@ def add_highscore():
         return make_response(jsonify("You are unauthorized"), 401)
     # the data sent via post request is e.g. {'name': 'dummy', 'overall_highscore': 100}
     sent_data = json.loads(request.data)
+    if validate_name(sent_data['name']) != True:
+        return make_response("Name must be be at least 5 characters and max 50 characters long", 400)
     save_highscore(sent_data['name'], sent_data['overall_highscore'])
     return make_response("", 201)
 
@@ -82,7 +83,7 @@ def delete_highscore(the_id):
 def show_highscores():
     # The highscore page doesn't need password
     limit = 100
-    sort = "none"
+    sort = "desc"
     if request.args.get("sort") != None:
         sort = request.args.get("sort")
     if request.args.get("limit") != None:
