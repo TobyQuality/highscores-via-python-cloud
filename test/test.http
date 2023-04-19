@@ -6,7 +6,7 @@ get http://127.0.0.1:5000/highscores?pw=monkeyisland
 post http://127.0.0.1:5000/api/highscores?pw=monkeyisland
 content-type: application/json
 
-{"id": 1, "name": "dummy", "overall_highscore": 500}
+{"name": "dummy", "overall_highscore": 40}
 
 ###
 
@@ -30,7 +30,7 @@ get http://127.0.0.1:5000/api/scores?sort=desc&limit=10&pw=secret
 
 ###
 
-delete http://127.0.0.1:5000/api/highscores/1?pw=monkeyisland
+delete http://127.0.0.1:5000/api/highscores/7?pw=monkeyisland
 
 ###
 

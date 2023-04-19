@@ -42,14 +42,13 @@ def get_players_highscore(the_id):
     pw = request.args.get("pw")
     if (check_api_key(pw) == False):
         return make_response(jsonify("You are unauthorized"), 401)
-    players_data = fetch_player_data(the_id)
+    players_data = fetch_highscore(the_id)
     if players_data != None:
         # if player with id given as argument is found,
         # then a new dict object will be created,
         # which contains only id, name and overall highscore
         # from the data
-        return make_response(jsonify({"name": players_data['name'], 
-                                    "highscore": players_data['highscore']}), 200)
+        return make_response(jsonify(players_data), 200)
     else:
         abort(404)
 
@@ -60,23 +59,11 @@ def add_highscore():
     pw = request.args.get("pw")
     if (check_api_key(pw) == False):
         return make_response(jsonify("You are unauthorized"), 401)
-    # the data sent via post request is e.g. {'id': 1, 'name': 'dummy', level_highscores: [10,20,40,50], 'score': 100}
+    # the data sent via post request is e.g. {'name': 'dummy', 'overall_highscore': 100}
     sent_data = json.loads(request.data)
-    # first we have to make sure that the score that's being sent
-    # is greater than the current highscore of the level. First the player data is fetched
-    players_data = fetch_player_data(sent_data['id'])
-    # the player's new level score has to be measured against the current level highscore
-    # if the new score is greater, then it will be saved in the json file
-    if sent_data['overall_highscore'] > players_data['highscore']:
-        save_highscore(sent_data['name'], sent_data['overall_highscore'])
-        return make_response("", 201)
-    else:
-        # even if the score didn't update, a status code 200 is sent to
-        # inform that the sent information was handled
-        return make_response("", 200)
+    save_highscore(sent_data['name'], sent_data['overall_highscore'])
+    return make_response("", 201)
 
-# the delete method is used for deleting all scores,
-# including level highscores and the overall highscore of all levels
 @app.route('/api/highscores/<int:the_id>', methods=['DELETE'])
 def delete_highscore(the_id):
     pw = request.args.get("pw")
@@ -85,34 +72,11 @@ def delete_highscore(the_id):
     # Before deletion, it has to be made sure that
     # the id of a player exists. Otherwise, a response
     # with status code 404 will be sent
-    player_data = fetch_player_data(the_id)
+    player_data = fetch_highscore(the_id)
     if player_data == None:
         return make_response("", 404)
-    else:
-        delete_score_by_id(the_id)
-        return make_response("", 204)
-    
-@app.route('/api/new_player', methods=['POST'])
-def create_new_account():
-    pw = request.args.get("pw")
-    if (check_api_key(pw) == False):
-        return make_response(jsonify("You are unauthorized"), 401)
-    # the request should contain json object with two properties
-    # "name" and "email" and their values
-    sent_data = json.loads(request.data)
-    # first we need to make sure that the username is unique
-    players_list = json.loads(read_database())
-    for player_data in players_list:
-        if player_data['name'] == sent_data['name']:
-            return make_response(jsonify({"error": "Name already exists"}), 409)
-        if player_data['email'] == sent_data['email']:
-            return make_response(jsonify({"error": "Email already exists"}), 409)
-    # if username is unique, new player data can be constructed
-    id = len(players_list) + 1
-    new_player = {"id": id, "name": sent_data['name'], "email": sent_data['email'], "highscore": 0}
-    add_new_player(new_player)
-    # the new player info is sent back to the game
-    return make_response(jsonify(new_player), 200)
+    remove_highscore(the_id)
+    return make_response("", 204)
 
 @app.route('/highscores')
 def show_highscores():

@@ -32,9 +32,9 @@ def read_database():
     f = open_file("r")
     content = f.read()
     f.close()
-    return content
+    return content.strip()
 
-def fetch_highscores(limit = 100, sort="none"):
+def fetch_highscores(limit = 100, sort="desc"):
     """
     Fetch the highscores from the highscores.json file.
     Args:
@@ -50,13 +50,17 @@ def fetch_highscores(limit = 100, sort="none"):
     # 100 is the default limit
     if limit > 100 or limit <= 0:
         limit = 100
-    # if sort is not "none", "asc", or "desc", then it will be "none"
-    # by default
-    if sort != "none":
+    # if sort is not "none", "asc", or "desc", then it will be "desc"
+    # by default, meaning the highscores list will be shown in descending order
+    # as opposed to ascending or no particular order
+    if sort != "desc":
         if sort != "asc":
-            if sort != "desc":
-                sort= "none"
-    #print(sort)
+            if sort != "none":
+                sort= "desc"
+    # highscored variable is used for returning a list object.
+    # It is specifically needed, because int given as parameter will limit
+    # the number of objects that will be returned from json file,
+    # so a new list is needed
     highscores = []
     # the loads function converts json to a python object,
     # in this case to a list
@@ -65,19 +69,14 @@ def fetch_highscores(limit = 100, sort="none"):
     # is the limit or length of the list, dependent on whether the limit
     # is greater than the length of the list or not
     max_range = len(content) if limit > len(content) else limit
-    # we want to return a list of dicts, 
-    # with each dict object containing only name and highscore
+    # a list containing dicts will be returned
     if sort == "none":
-        for i in range(0, max_range):
-            player_and_highscore = {}
-            player_and_highscore['player'] = content[i]['name']
-            player_and_highscore['highscore'] = content[i]['highscore']
-            highscores.append(player_and_highscore)
-        return highscores
+        return content
     if sort == "asc":
         sorted_highscores = sorted(content, key=lambda d: d['highscore'])
         for i in range(0, max_range):
             player_and_highscore = {}
+            player_and_highscore['id'] = content[i]['id']
             player_and_highscore['player'] = sorted_highscores[i]['name']
             player_and_highscore['highscore'] = sorted_highscores[i]['highscore']
             highscores.append(player_and_highscore)
@@ -86,12 +85,13 @@ def fetch_highscores(limit = 100, sort="none"):
         sorted_highscores = sorted(content, key=lambda d: d['highscore'], reverse=True)
         for i in range(0, max_range):
             player_and_highscore = {}
+            player_and_highscore['id'] = content[i]['id']
             player_and_highscore['player'] = sorted_highscores[i]['name']
             player_and_highscore['highscore'] = sorted_highscores[i]['highscore']
             highscores.append(player_and_highscore)
         return highscores
 
-def fetch_player_data(id):
+def fetch_highscore(id):
     """
     Fetch the highscores from the highscores.json file.
     Args:
@@ -108,7 +108,7 @@ def fetch_player_data(id):
     # it will be dealt with in index.py
     # with an appropriate response
     player_data = None
-    content = json.loads(read_database().strip())
+    content = json.loads(read_database())
     for data in content:
         if data['id'] == id:
             player_data = data
@@ -117,76 +117,47 @@ def fetch_player_data(id):
 
 def save_highscore(name, overall_highscore):
     """
-    This function saves the highscore for a specific player and level in the database.
+    This function saves the highscore for a specific player in the database.
     
     Args:
         name (str): The name of the player.
-        level (int): The level number for which the highscore is being updated.
-        level_highscore (int): The highscore to be saved for the given level.
+        overall_highscore (int): The highscore to be saved.
         
     Returns:
         None
     """
     content = json.loads(read_database())
-    for data in content:
-        # the highscore of the player given as argument will be modified.
-        # The variable 'content' is a list containing dicts. It has a property called
-        # 'name' which is needed to find the highscores tied to the player's name,
-        # contained in a list named 'level_highscores'
-        if data['name'] == name:
-            # once the player is found, the index of the list 'level_highscores' 
-            # is determined by level number minus one due to list index starting from 0.
-            # after level highscore has been updated,
-            # the overall highscore of all levels, contained in the property
-            # 'highscore', has to be updated.
-            data['highscore'] = overall_highscore
-            break
-    # Once out of the for loop, overwriting the json file can proceed
+    # new highscore id is array length + 1
+    id = len(content) + 1
+    new_highscore = {"id": id, "name": name, "highscore": overall_highscore}
+    # new highscore is added to the list
+    content.append(new_highscore)
     # The list data inside variable 'content' has to be stringified before
     # writing its content to highscores.json file.
     f = open_file("w")
     f.write(json.dumps(content))
     f.close()
 
-def delete_score_by_id(id):
+def remove_highscore(id):
     """
-    This function deletes the highscore and level highscores for a specific player by ID in the database.
+    This function removes the highscore and for a specific player by ID in the database.
     
     Args:
-        id (int): The ID of the player whose highscore and level highscores are to be deleted.
+        id (int): The ID of the player whose highscore is to be deleted.
         
     Returns:
         None
     """
     if type(id) != int:
         raise Exception('Give integer type of id')
-    player_data = fetch_player_data(id)
-    player_data['highscore'] = 0
     player_data_list = json.loads(read_database())
+    # if highscore with given id is found, the highscore will be deleted
     for i in range(len(player_data_list)):
         if player_data_list[i]['id'] == id:
-            player_data_list[i] = player_data
+            player_data_list.pop(i)
             break
     f = open_file("w")
     f.write(json.dumps(player_data_list))
-    f.close()
-
-def add_new_player(dict_object):
-    """
-    This function adds a new player to the database with the given player data as a dictionary.
-    
-    Args:
-        dict_object (dict): A dictionary containing the player data to be added to the database.
-        
-    Returns:
-        None
-    """
-    if type(dict_object) != dict:
-        raise Exception("Give a dict object as parameter")
-    content = json.loads(read_database())
-    content.append(dict_object)
-    f = open_file("w")
-    json.dump(content, f)
     f.close()
 
 def main():
