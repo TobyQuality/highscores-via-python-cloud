@@ -2,3 +2,4 @@ Flask
 Gunicorn
 python-dotenv
 bcrypt
+firebase-admin
