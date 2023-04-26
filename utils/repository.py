@@ -131,8 +131,18 @@ def save_highscore(name, overall_highscore):
     if type(overall_highscore) != int:
         raise Exception("Give int as highscore")
     content = json.loads(read_database())
-    # new highscore id is array length + 1
+    # new highscore id is initially array length + 1
     id = len(content) + 1
+    # check if there is a duplicate id
+    duplicate = True
+    while duplicate:
+        if fetch_highscore(id) != None:
+            #print("id was " + str(id))
+            id = id + 1
+            #print("id is now " + str(id))
+        else:
+            duplicate = False
+    
     new_highscore = {"id": id, "name": name, "highscore": overall_highscore}
     # new highscore is added to the list
     content.append(new_highscore)

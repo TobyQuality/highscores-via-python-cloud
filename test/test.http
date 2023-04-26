@@ -1,12 +1,12 @@
 
-get http://127.0.0.1:5000/highscores?pw=monkeyisland
+get http://127.0.0.1:5000/highscores?sort=none&pw=monkeyisland
 
 ###
 
 post http://127.0.0.1:5000/api/highscores?pw=monkeyisland
 content-type: application/json
 
-{"name": "dummy", "overall_highscore": 40}
+{"player_name": "Johnny", "overall_highscore": 50}
 
 ###
 
@@ -14,15 +14,11 @@ get http://127.0.0.1:5000/api/highscores?pw=monkeyisland
 
 ###
 
-get http://127.0.0.1:5000/api/scores?limit=10&pw=secret
+get http://127.0.0.1:5000/api/highscores?limit=5&pw=monkeyisland
 
 ###
 
-get http://127.0.0.1:5000/api/scores?sort=asc&pw=secret
-
-###
-
-get http://127.0.0.1:5000/api/scores?sort=desc&pw=secret
+get http://127.0.0.1:5000/api/highscores?sort=asc&limit=2&pw=monkeyisland
 
 ###
 
@@ -30,17 +26,10 @@ get http://127.0.0.1:5000/api/scores?sort=desc&limit=10&pw=secret
 
 ###
 
-delete http://127.0.0.1:5000/api/highscores/7?pw=monkeyisland
+delete http://127.0.0.1:5000/api/highscores/4?pw=monkeyisland
 
 ###
 
-get http://127.0.0.1:5000/api/highscores/1?pw=monkeyisland
-
-###
-
-post http://127.0.0.1:5000/api/new_player?pw=monkeyisland
-content-type: application/json
-
-{"name": "jessi", "email": "jessi@gmail.com"}
+get http://127.0.0.1:5000/api/highscores/4?pw=monkeyisland
 
 ###
