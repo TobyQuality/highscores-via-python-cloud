@@ -44,4 +44,4 @@ API is deployed to cloud and can be accessed using following url:
 
 # Screencast
 
-[![Screencast](https://youtu.be/tui9hdY9XlI)
+[![Screencast](https://img.youtube.com/vi/2CTqg_e51BU/0.jpg)](https://youtu.be/ycTJvs3DjV0)
