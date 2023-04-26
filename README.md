@@ -44,4 +44,4 @@ API is deployed to cloud and can be accessed using following url:
 
 # Screencast
 
-[![Screencast](https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg)](https://youtu.be/zc5AwK1_ktc)
+[![Screencast](https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg)](https://youtu.be/tui9hdY9XlI)
