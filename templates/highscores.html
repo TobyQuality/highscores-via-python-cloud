@@ -53,7 +53,7 @@
                         {% for player_score in highscores %}
                         <tr>
                             <td>{{highscores.index(player_score) + 1}}</td>
-                            <td>{{player_score['player']}}</td>
+                            <td>{{player_score['name']}}</td>
                             <td>{{player_score['highscore']}}</td>
                         </tr>
                         {% endfor %}

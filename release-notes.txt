@@ -21,4 +21,7 @@ RELEASE 3
 RELEASE 4
 - Adding highscore from the game has been implemented
 - Documentation for the functions
-- Tests for functions in index.py
+- Tests for functions in index.
+
+RELEASE 5
+- Using firebase for permanent storage of highscores
