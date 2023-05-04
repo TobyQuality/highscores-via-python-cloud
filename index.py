@@ -295,7 +295,6 @@ def show_highscores():
         sorted_highscores = sorted(highscores, key=lambda d: d['highscore'])
         for i in range(0, max_range):
             returned_highscores.append(sorted_highscores[i])
-        return highscores
     if sort == "desc":
         sorted_highscores = sorted(highscores, key=lambda d: d['highscore'], reverse=True)
         for i in range(0, max_range):

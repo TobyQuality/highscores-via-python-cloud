@@ -12,9 +12,13 @@ Topias Laatu
 
 # Tech/framework used
 
-The highscore functions are implemented in Python programming language and the server is running on Flask environment. Gunicorn is used for deploying the app in cloud environment in Render.com. Bcrypt is used for giving a password protection for the http/https requests.
+The highscore functions are implemented in Python programming language and the server is running on Flask environment. Gunicorn is used for deploying the app in cloud environment in Render.com. Bcrypt is used for giving a password protection for the http/https requests. The highscores are stored permanently in Firebase.
 
 # Installation and running
+
+!!!
+THE CURRENT VERSION OF THE APP DOES NOT WORK AS DESCRIBED BELOW! FIND EARLIER VERSION FROM MAIN BRANCH, WHERE THE FIREBASE SOLUTION IS NOT PRESENT!
+!!!
 
 Provide step by step series of examples and explanations about how to get a development env running. Example:
 
