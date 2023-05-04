@@ -13,10 +13,8 @@ app = Flask(__name__)
 # loading the .env file
 load_dotenv()
 
-#!!!!
-# Most of the code concerning Firebase
-# is based on the code of Jussi Pohjolainen (pohjus at Github)
-#!!!!
+# Credits to Jussi Pohjolainen (pohjus at Github),
+# who guided how to set up a permanent storage at Firebase
 
 # read firebase env
 # create new variable to render.com named firebase whose
@@ -65,12 +63,28 @@ def check_api_key(pw):
     return True if result else False
 
 def fetch_highscores_from_firebase():
+    """
+    Fetches the highscores data from the Firebase storage bucket.
+
+    Returns:
+        dict: The highscores data in dictionary format.
+    """
     blob = bucket.blob('highscores.json')
     content = blob.download_as_string().decode('utf-8')
     highscores = json.loads(content)
     return highscores
 
 def fetch_a_highscore_based_on_id(id, highscores):
+    """
+    Fetches a specific highscore based on the given id from the highscores data.
+
+    Args:
+        id (str): The id of the highscore to fetch.
+        highscores (dict): The highscores data in dictionary format.
+
+    Returns:
+        dict: The highscore data in dictionary format.
+    """
     highscore = None
     for data in highscores:
         if data['id'] == id:
@@ -79,6 +93,16 @@ def fetch_a_highscore_based_on_id(id, highscores):
     return highscore
 
 def upload_to_firebase(content, content_type="application/json"):
+    """
+    Uploads the given content to the Firebase storage bucket.
+
+    Args:
+        content (str): The content to upload.
+        content_type (str, optional): The content type. Defaults to "application/json".
+
+    Returns:
+        None
+    """
     blob = bucket.blob('highscores.json')
     blob.upload_from_string(content, content_type)
 

@@ -27,6 +27,18 @@
                     <a class="function" href="#check_api_key">check_api_key</a>
             </li>
             <li>
+                    <a class="function" href="#fetch_highscores_from_firebase">fetch_highscores_from_firebase</a>
+            </li>
+            <li>
+                    <a class="function" href="#fetch_a_highscore_based_on_id">fetch_a_highscore_based_on_id</a>
+            </li>
+            <li>
+                    <a class="function" href="#upload_to_firebase">upload_to_firebase</a>
+            </li>
+            <li>
+                    <a class="function" href="#validate_name">validate_name</a>
+            </li>
+            <li>
                     <a class="function" href="#root">root</a>
             </li>
             <li>
@@ -70,164 +82,307 @@ app    </h1>
 </span><span id="L-3"><a href="#L-3"><span class="linenos">  3</span></a><span class="kn">from</span> <span class="nn">dotenv</span> <span class="kn">import</span> <span class="n">load_dotenv</span>
 </span><span id="L-4"><a href="#L-4"><span class="linenos">  4</span></a><span class="kn">import</span> <span class="nn">os</span>
 </span><span id="L-5"><a href="#L-5"><span class="linenos">  5</span></a><span class="kn">import</span> <span class="nn">bcrypt</span>
-</span><span id="L-6"><a href="#L-6"><span class="linenos">  6</span></a><span class="kn">from</span> <span class="nn">utils.repository</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-7"><a href="#L-7"><span class="linenos">  7</span></a><span class="kn">from</span> <span class="nn">utils.validator</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-8"><a href="#L-8"><span class="linenos">  8</span></a>
-</span><span id="L-9"><a href="#L-9"><span class="linenos">  9</span></a><span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos">  6</span></a><span class="kn">import</span> <span class="nn">firebase_admin</span>
+</span><span id="L-7"><a href="#L-7"><span class="linenos">  7</span></a><span class="kn">from</span> <span class="nn">firebase_admin</span> <span class="kn">import</span> <span class="n">credentials</span>
+</span><span id="L-8"><a href="#L-8"><span class="linenos">  8</span></a><span class="kn">from</span> <span class="nn">firebase_admin</span> <span class="kn">import</span> <span class="n">storage</span>
+</span><span id="L-9"><a href="#L-9"><span class="linenos">  9</span></a><span class="kn">import</span> <span class="nn">tempfile</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a>
-</span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a><span class="c1"># loading the .env file containing the api key for the app</span>
-</span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a><span class="n">load_dotenv</span><span class="p">()</span>
-</span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="c1"># accessing the api key</span>
-</span><span id="L-14"><a href="#L-14"><span class="linenos"> 14</span></a><span class="n">API_KEY</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;API_KEY&#39;</span><span class="p">)</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a><span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a>
+</span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="c1"># loading the .env file</span>
+</span><span id="L-14"><a href="#L-14"><span class="linenos"> 14</span></a><span class="n">load_dotenv</span><span class="p">()</span>
 </span><span id="L-15"><a href="#L-15"><span class="linenos"> 15</span></a>
-</span><span id="L-16"><a href="#L-16"><span class="linenos"> 16</span></a><span class="c1"># this method is used to check the validity of the password</span>
-</span><span id="L-17"><a href="#L-17"><span class="linenos"> 17</span></a><span class="c1"># sent with requests to the backend</span>
-</span><span id="L-18"><a href="#L-18"><span class="linenos"> 18</span></a><span class="k">def</span> <span class="nf">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">):</span>
-</span><span id="L-19"><a href="#L-19"><span class="linenos"> 19</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-20"><a href="#L-20"><span class="linenos"> 20</span></a><span class="sd">    Check the validity of the password sent with requests to the backend.</span>
-</span><span id="L-21"><a href="#L-21"><span class="linenos"> 21</span></a>
-</span><span id="L-22"><a href="#L-22"><span class="linenos"> 22</span></a><span class="sd">    Args:</span>
-</span><span id="L-23"><a href="#L-23"><span class="linenos"> 23</span></a><span class="sd">        pw (str): The password string to be checked.</span>
-</span><span id="L-24"><a href="#L-24"><span class="linenos"> 24</span></a>
-</span><span id="L-25"><a href="#L-25"><span class="linenos"> 25</span></a><span class="sd">    Returns:</span>
-</span><span id="L-26"><a href="#L-26"><span class="linenos"> 26</span></a><span class="sd">        bool: True if the password is valid, False otherwise.</span>
-</span><span id="L-27"><a href="#L-27"><span class="linenos"> 27</span></a>
-</span><span id="L-28"><a href="#L-28"><span class="linenos"> 28</span></a><span class="sd">    Raises:</span>
-</span><span id="L-29"><a href="#L-29"><span class="linenos"> 29</span></a><span class="sd">        None</span>
-</span><span id="L-30"><a href="#L-30"><span class="linenos"> 30</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-31"><a href="#L-31"><span class="linenos"> 31</span></a>    <span class="c1"># hashing the API_KEY that has been turned to bytes array</span>
-</span><span id="L-32"><a href="#L-32"><span class="linenos"> 32</span></a>    <span class="c1"># with randomly generated salt</span>
-</span><span id="L-33"><a href="#L-33"><span class="linenos"> 33</span></a>    <span class="nb">hash</span> <span class="o">=</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">hashpw</span><span class="p">(</span><span class="n">API_KEY</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">),</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">gensalt</span><span class="p">())</span>
-</span><span id="L-34"><a href="#L-34"><span class="linenos"> 34</span></a>    <span class="c1"># checking password received as parameter with api key</span>
-</span><span id="L-35"><a href="#L-35"><span class="linenos"> 35</span></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">checkpw</span><span class="p">(</span><span class="n">pw</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">),</span> <span class="nb">hash</span><span class="p">)</span>
-</span><span id="L-36"><a href="#L-36"><span class="linenos"> 36</span></a>    <span class="c1"># returned values are boolean type</span>
-</span><span id="L-37"><a href="#L-37"><span class="linenos"> 37</span></a>    <span class="k">return</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">result</span> <span class="k">else</span> <span class="kc">False</span>
+</span><span id="L-16"><a href="#L-16"><span class="linenos"> 16</span></a><span class="c1"># Credits to Jussi Pohjolainen (pohjus at Github),</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos"> 17</span></a><span class="c1"># who guided how to set up a permanent storage at Firebase</span>
+</span><span id="L-18"><a href="#L-18"><span class="linenos"> 18</span></a>
+</span><span id="L-19"><a href="#L-19"><span class="linenos"> 19</span></a><span class="c1"># read firebase env</span>
+</span><span id="L-20"><a href="#L-20"><span class="linenos"> 20</span></a><span class="c1"># create new variable to render.com named firebase whose</span>
+</span><span id="L-21"><a href="#L-21"><span class="linenos"> 21</span></a><span class="c1"># content is a json file from firebase</span>
+</span><span id="L-22"><a href="#L-22"><span class="linenos"> 22</span></a><span class="n">json_str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;firebase&#39;</span><span class="p">)</span>
+</span><span id="L-23"><a href="#L-23"><span class="linenos"> 23</span></a>
+</span><span id="L-24"><a href="#L-24"><span class="linenos"> 24</span></a><span class="c1"># save the content of the env to a temp file</span>
+</span><span id="L-25"><a href="#L-25"><span class="linenos"> 25</span></a><span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+</span><span id="L-26"><a href="#L-26"><span class="linenos"> 26</span></a>    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">json_str</span><span class="p">))</span>
+</span><span id="L-27"><a href="#L-27"><span class="linenos"> 27</span></a>    <span class="n">temp_path</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span>
+</span><span id="L-28"><a href="#L-28"><span class="linenos"> 28</span></a>
+</span><span id="L-29"><a href="#L-29"><span class="linenos"> 29</span></a><span class="c1"># read json file</span>
+</span><span id="L-30"><a href="#L-30"><span class="linenos"> 30</span></a><span class="n">cred</span> <span class="o">=</span> <span class="n">credentials</span><span class="o">.</span><span class="n">Certificate</span><span class="p">(</span><span class="n">temp_path</span><span class="p">)</span>
+</span><span id="L-31"><a href="#L-31"><span class="linenos"> 31</span></a>
+</span><span id="L-32"><a href="#L-32"><span class="linenos"> 32</span></a><span class="c1"># create env to render.com named bucket, whose content is</span>
+</span><span id="L-33"><a href="#L-33"><span class="linenos"> 33</span></a><span class="c1"># e.g.: mydatabase-38cf0.appspot.com</span>
+</span><span id="L-34"><a href="#L-34"><span class="linenos"> 34</span></a><span class="n">firebase_admin</span><span class="o">.</span><span class="n">initialize_app</span><span class="p">(</span><span class="n">cred</span><span class="p">,</span> <span class="p">{</span>
+</span><span id="L-35"><a href="#L-35"><span class="linenos"> 35</span></a>    <span class="s1">&#39;storageBucket&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;bucket&#39;</span><span class="p">)</span>
+</span><span id="L-36"><a href="#L-36"><span class="linenos"> 36</span></a><span class="p">})</span>
+</span><span id="L-37"><a href="#L-37"><span class="linenos"> 37</span></a><span class="n">bucket</span> <span class="o">=</span> <span class="n">storage</span><span class="o">.</span><span class="n">bucket</span><span class="p">()</span>
 </span><span id="L-38"><a href="#L-38"><span class="linenos"> 38</span></a>
-</span><span id="L-39"><a href="#L-39"><span class="linenos"> 39</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
-</span><span id="L-40"><a href="#L-40"><span class="linenos"> 40</span></a><span class="k">def</span> <span class="nf">root</span><span class="p">():</span>
-</span><span id="L-41"><a href="#L-41"><span class="linenos"> 41</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-42"><a href="#L-42"><span class="linenos"> 42</span></a><span class="sd">    Route for the root URL (&quot;/&quot;).</span>
-</span><span id="L-43"><a href="#L-43"><span class="linenos"> 43</span></a>
-</span><span id="L-44"><a href="#L-44"><span class="linenos"> 44</span></a><span class="sd">    Returns:</span>
-</span><span id="L-45"><a href="#L-45"><span class="linenos"> 45</span></a><span class="sd">        str: A string with a greeting message.</span>
-</span><span id="L-46"><a href="#L-46"><span class="linenos"> 46</span></a>
-</span><span id="L-47"><a href="#L-47"><span class="linenos"> 47</span></a><span class="sd">    Raises:</span>
-</span><span id="L-48"><a href="#L-48"><span class="linenos"> 48</span></a><span class="sd">        None</span>
-</span><span id="L-49"><a href="#L-49"><span class="linenos"> 49</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-50"><a href="#L-50"><span class="linenos"> 50</span></a>    <span class="k">return</span> <span class="s2">&quot;&lt;h1&gt;:)&lt;/h1&gt;&quot;</span>
-</span><span id="L-51"><a href="#L-51"><span class="linenos"> 51</span></a>
-</span><span id="L-52"><a href="#L-52"><span class="linenos"> 52</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/api/highscores&quot;</span><span class="p">)</span>
-</span><span id="L-53"><a href="#L-53"><span class="linenos"> 53</span></a><span class="k">def</span> <span class="nf">get_highscores</span><span class="p">():</span>
-</span><span id="L-54"><a href="#L-54"><span class="linenos"> 54</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-55"><a href="#L-55"><span class="linenos"> 55</span></a><span class="sd">    Route for getting highscores via API.</span>
-</span><span id="L-56"><a href="#L-56"><span class="linenos"> 56</span></a>
-</span><span id="L-57"><a href="#L-57"><span class="linenos"> 57</span></a><span class="sd">    Returns:</span>
-</span><span id="L-58"><a href="#L-58"><span class="linenos"> 58</span></a><span class="sd">        Response: A Flask Response object containing highscores data or an error message.</span>
-</span><span id="L-59"><a href="#L-59"><span class="linenos"> 59</span></a>
-</span><span id="L-60"><a href="#L-60"><span class="linenos"> 60</span></a><span class="sd">    Raises:</span>
-</span><span id="L-61"><a href="#L-61"><span class="linenos"> 61</span></a><span class="sd">        None</span>
-</span><span id="L-62"><a href="#L-62"><span class="linenos"> 62</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-63"><a href="#L-63"><span class="linenos"> 63</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
-</span><span id="L-64"><a href="#L-64"><span class="linenos"> 64</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
-</span><span id="L-65"><a href="#L-65"><span class="linenos"> 65</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
-</span><span id="L-66"><a href="#L-66"><span class="linenos"> 66</span></a>    <span class="n">highscores</span> <span class="o">=</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">fetch_highscores</span><span class="p">())</span>
-</span><span id="L-67"><a href="#L-67"><span class="linenos"> 67</span></a>    <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">highscores</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+</span><span id="L-39"><a href="#L-39"><span class="linenos"> 39</span></a><span class="c1"># accessing the api key used as password with requests to the server</span>
+</span><span id="L-40"><a href="#L-40"><span class="linenos"> 40</span></a><span class="n">API_KEY</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;API_KEY&#39;</span><span class="p">)</span>
+</span><span id="L-41"><a href="#L-41"><span class="linenos"> 41</span></a>
+</span><span id="L-42"><a href="#L-42"><span class="linenos"> 42</span></a><span class="c1"># this method is used to check the validity of the password</span>
+</span><span id="L-43"><a href="#L-43"><span class="linenos"> 43</span></a><span class="c1"># sent with requests to the backend</span>
+</span><span id="L-44"><a href="#L-44"><span class="linenos"> 44</span></a><span class="k">def</span> <span class="nf">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">):</span>
+</span><span id="L-45"><a href="#L-45"><span class="linenos"> 45</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-46"><a href="#L-46"><span class="linenos"> 46</span></a><span class="sd">    Check the validity of the password sent with requests to the backend.</span>
+</span><span id="L-47"><a href="#L-47"><span class="linenos"> 47</span></a>
+</span><span id="L-48"><a href="#L-48"><span class="linenos"> 48</span></a><span class="sd">    Args:</span>
+</span><span id="L-49"><a href="#L-49"><span class="linenos"> 49</span></a><span class="sd">        pw (str): The password string to be checked.</span>
+</span><span id="L-50"><a href="#L-50"><span class="linenos"> 50</span></a>
+</span><span id="L-51"><a href="#L-51"><span class="linenos"> 51</span></a><span class="sd">    Returns:</span>
+</span><span id="L-52"><a href="#L-52"><span class="linenos"> 52</span></a><span class="sd">        bool: True if the password is valid, False otherwise.</span>
+</span><span id="L-53"><a href="#L-53"><span class="linenos"> 53</span></a>
+</span><span id="L-54"><a href="#L-54"><span class="linenos"> 54</span></a><span class="sd">    Raises:</span>
+</span><span id="L-55"><a href="#L-55"><span class="linenos"> 55</span></a><span class="sd">        None</span>
+</span><span id="L-56"><a href="#L-56"><span class="linenos"> 56</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-57"><a href="#L-57"><span class="linenos"> 57</span></a>    <span class="c1"># hashing the API_KEY that has been turned to bytes array</span>
+</span><span id="L-58"><a href="#L-58"><span class="linenos"> 58</span></a>    <span class="c1"># with randomly generated salt</span>
+</span><span id="L-59"><a href="#L-59"><span class="linenos"> 59</span></a>    <span class="nb">hash</span> <span class="o">=</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">hashpw</span><span class="p">(</span><span class="n">API_KEY</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">),</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">gensalt</span><span class="p">())</span>
+</span><span id="L-60"><a href="#L-60"><span class="linenos"> 60</span></a>    <span class="c1"># checking password received as parameter with api key</span>
+</span><span id="L-61"><a href="#L-61"><span class="linenos"> 61</span></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">checkpw</span><span class="p">(</span><span class="n">pw</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">),</span> <span class="nb">hash</span><span class="p">)</span>
+</span><span id="L-62"><a href="#L-62"><span class="linenos"> 62</span></a>    <span class="c1"># returned values are boolean type</span>
+</span><span id="L-63"><a href="#L-63"><span class="linenos"> 63</span></a>    <span class="k">return</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">result</span> <span class="k">else</span> <span class="kc">False</span>
+</span><span id="L-64"><a href="#L-64"><span class="linenos"> 64</span></a>
+</span><span id="L-65"><a href="#L-65"><span class="linenos"> 65</span></a><span class="k">def</span> <span class="nf">fetch_highscores_from_firebase</span><span class="p">():</span>
+</span><span id="L-66"><a href="#L-66"><span class="linenos"> 66</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-67"><a href="#L-67"><span class="linenos"> 67</span></a><span class="sd">    Fetches the highscores data from the Firebase storage bucket.</span>
 </span><span id="L-68"><a href="#L-68"><span class="linenos"> 68</span></a>
-</span><span id="L-69"><a href="#L-69"><span class="linenos"> 69</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/highscores/&lt;int:the_id&gt;&#39;</span><span class="p">)</span>
-</span><span id="L-70"><a href="#L-70"><span class="linenos"> 70</span></a><span class="k">def</span> <span class="nf">get_players_highscore</span><span class="p">(</span><span class="n">the_id</span><span class="p">):</span>
-</span><span id="L-71"><a href="#L-71"><span class="linenos"> 71</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-72"><a href="#L-72"><span class="linenos"> 72</span></a><span class="sd">    Route for getting a specific player&#39;s highscore via API.</span>
-</span><span id="L-73"><a href="#L-73"><span class="linenos"> 73</span></a>
-</span><span id="L-74"><a href="#L-74"><span class="linenos"> 74</span></a><span class="sd">    Args:</span>
-</span><span id="L-75"><a href="#L-75"><span class="linenos"> 75</span></a><span class="sd">        the_id (int): The ID of the player.</span>
+</span><span id="L-69"><a href="#L-69"><span class="linenos"> 69</span></a><span class="sd">    Returns:</span>
+</span><span id="L-70"><a href="#L-70"><span class="linenos"> 70</span></a><span class="sd">        dict: The highscores data in dictionary format.</span>
+</span><span id="L-71"><a href="#L-71"><span class="linenos"> 71</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-72"><a href="#L-72"><span class="linenos"> 72</span></a>    <span class="n">blob</span> <span class="o">=</span> <span class="n">bucket</span><span class="o">.</span><span class="n">blob</span><span class="p">(</span><span class="s1">&#39;highscores.json&#39;</span><span class="p">)</span>
+</span><span id="L-73"><a href="#L-73"><span class="linenos"> 73</span></a>    <span class="n">content</span> <span class="o">=</span> <span class="n">blob</span><span class="o">.</span><span class="n">download_as_string</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+</span><span id="L-74"><a href="#L-74"><span class="linenos"> 74</span></a>    <span class="n">highscores</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+</span><span id="L-75"><a href="#L-75"><span class="linenos"> 75</span></a>    <span class="k">return</span> <span class="n">highscores</span>
 </span><span id="L-76"><a href="#L-76"><span class="linenos"> 76</span></a>
-</span><span id="L-77"><a href="#L-77"><span class="linenos"> 77</span></a><span class="sd">    Returns:</span>
-</span><span id="L-78"><a href="#L-78"><span class="linenos"> 78</span></a><span class="sd">        Response: A Flask Response object containing the player&#39;s highscore data or an error message.</span>
-</span><span id="L-79"><a href="#L-79"><span class="linenos"> 79</span></a>
-</span><span id="L-80"><a href="#L-80"><span class="linenos"> 80</span></a><span class="sd">    Raises:</span>
-</span><span id="L-81"><a href="#L-81"><span class="linenos"> 81</span></a><span class="sd">        NotFound: If the player with the given ID is not found.</span>
-</span><span id="L-82"><a href="#L-82"><span class="linenos"> 82</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-83"><a href="#L-83"><span class="linenos"> 83</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
-</span><span id="L-84"><a href="#L-84"><span class="linenos"> 84</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
-</span><span id="L-85"><a href="#L-85"><span class="linenos"> 85</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
-</span><span id="L-86"><a href="#L-86"><span class="linenos"> 86</span></a>    <span class="n">players_data</span> <span class="o">=</span> <span class="n">fetch_highscore</span><span class="p">(</span><span class="n">the_id</span><span class="p">)</span>
-</span><span id="L-87"><a href="#L-87"><span class="linenos"> 87</span></a>    <span class="k">if</span> <span class="n">players_data</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="L-88"><a href="#L-88"><span class="linenos"> 88</span></a>        <span class="c1"># if player with id given as argument is found,</span>
-</span><span id="L-89"><a href="#L-89"><span class="linenos"> 89</span></a>        <span class="c1"># then a new dict object will be created,</span>
-</span><span id="L-90"><a href="#L-90"><span class="linenos"> 90</span></a>        <span class="c1"># which contains only id, name and overall highscore</span>
-</span><span id="L-91"><a href="#L-91"><span class="linenos"> 91</span></a>        <span class="c1"># from the data</span>
-</span><span id="L-92"><a href="#L-92"><span class="linenos"> 92</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="n">players_data</span><span class="p">),</span> <span class="mi">200</span><span class="p">)</span>
-</span><span id="L-93"><a href="#L-93"><span class="linenos"> 93</span></a>    <span class="k">else</span><span class="p">:</span>
-</span><span id="L-94"><a href="#L-94"><span class="linenos"> 94</span></a>        <span class="n">abort</span><span class="p">(</span><span class="mi">404</span><span class="p">)</span>
-</span><span id="L-95"><a href="#L-95"><span class="linenos"> 95</span></a>
-</span><span id="L-96"><a href="#L-96"><span class="linenos"> 96</span></a><span class="c1"># This method is used for posting a player&#39;s highscore in</span>
-</span><span id="L-97"><a href="#L-97"><span class="linenos"> 97</span></a><span class="c1"># one of the four levels of the game</span>
-</span><span id="L-98"><a href="#L-98"><span class="linenos"> 98</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/api/highscores&quot;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
-</span><span id="L-99"><a href="#L-99"><span class="linenos"> 99</span></a><span class="k">def</span> <span class="nf">add_highscore</span><span class="p">():</span>
-</span><span id="L-100"><a href="#L-100"><span class="linenos">100</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-101"><a href="#L-101"><span class="linenos">101</span></a><span class="sd">    Route for adding a player&#39;s highscore via API.</span>
+</span><span id="L-77"><a href="#L-77"><span class="linenos"> 77</span></a><span class="k">def</span> <span class="nf">fetch_a_highscore_based_on_id</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">highscores</span><span class="p">):</span>
+</span><span id="L-78"><a href="#L-78"><span class="linenos"> 78</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-79"><a href="#L-79"><span class="linenos"> 79</span></a><span class="sd">    Fetches a specific highscore based on the given id from the highscores data.</span>
+</span><span id="L-80"><a href="#L-80"><span class="linenos"> 80</span></a>
+</span><span id="L-81"><a href="#L-81"><span class="linenos"> 81</span></a><span class="sd">    Args:</span>
+</span><span id="L-82"><a href="#L-82"><span class="linenos"> 82</span></a><span class="sd">        id (str): The id of the highscore to fetch.</span>
+</span><span id="L-83"><a href="#L-83"><span class="linenos"> 83</span></a><span class="sd">        highscores (dict): The highscores data in dictionary format.</span>
+</span><span id="L-84"><a href="#L-84"><span class="linenos"> 84</span></a>
+</span><span id="L-85"><a href="#L-85"><span class="linenos"> 85</span></a><span class="sd">    Returns:</span>
+</span><span id="L-86"><a href="#L-86"><span class="linenos"> 86</span></a><span class="sd">        dict: The highscore data in dictionary format.</span>
+</span><span id="L-87"><a href="#L-87"><span class="linenos"> 87</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-88"><a href="#L-88"><span class="linenos"> 88</span></a>    <span class="n">highscore</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="L-89"><a href="#L-89"><span class="linenos"> 89</span></a>    <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">highscores</span><span class="p">:</span>
+</span><span id="L-90"><a href="#L-90"><span class="linenos"> 90</span></a>        <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="nb">id</span><span class="p">:</span>
+</span><span id="L-91"><a href="#L-91"><span class="linenos"> 91</span></a>            <span class="n">highscore</span> <span class="o">=</span> <span class="n">data</span>
+</span><span id="L-92"><a href="#L-92"><span class="linenos"> 92</span></a>            <span class="k">break</span>
+</span><span id="L-93"><a href="#L-93"><span class="linenos"> 93</span></a>    <span class="k">return</span> <span class="n">highscore</span>
+</span><span id="L-94"><a href="#L-94"><span class="linenos"> 94</span></a>
+</span><span id="L-95"><a href="#L-95"><span class="linenos"> 95</span></a><span class="k">def</span> <span class="nf">upload_to_firebase</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="s2">&quot;application/json&quot;</span><span class="p">):</span>
+</span><span id="L-96"><a href="#L-96"><span class="linenos"> 96</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-97"><a href="#L-97"><span class="linenos"> 97</span></a><span class="sd">    Uploads the given content to the Firebase storage bucket.</span>
+</span><span id="L-98"><a href="#L-98"><span class="linenos"> 98</span></a>
+</span><span id="L-99"><a href="#L-99"><span class="linenos"> 99</span></a><span class="sd">    Args:</span>
+</span><span id="L-100"><a href="#L-100"><span class="linenos">100</span></a><span class="sd">        content (str): The content to upload.</span>
+</span><span id="L-101"><a href="#L-101"><span class="linenos">101</span></a><span class="sd">        content_type (str, optional): The content type. Defaults to &quot;application/json&quot;.</span>
 </span><span id="L-102"><a href="#L-102"><span class="linenos">102</span></a>
 </span><span id="L-103"><a href="#L-103"><span class="linenos">103</span></a><span class="sd">    Returns:</span>
-</span><span id="L-104"><a href="#L-104"><span class="linenos">104</span></a><span class="sd">        Response: A Flask Response object indicating success or failure of the request.</span>
-</span><span id="L-105"><a href="#L-105"><span class="linenos">105</span></a>
-</span><span id="L-106"><a href="#L-106"><span class="linenos">106</span></a><span class="sd">    Raises:</span>
-</span><span id="L-107"><a href="#L-107"><span class="linenos">107</span></a><span class="sd">        None</span>
-</span><span id="L-108"><a href="#L-108"><span class="linenos">108</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-109"><a href="#L-109"><span class="linenos">109</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
-</span><span id="L-110"><a href="#L-110"><span class="linenos">110</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
-</span><span id="L-111"><a href="#L-111"><span class="linenos">111</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
-</span><span id="L-112"><a href="#L-112"><span class="linenos">112</span></a>    <span class="c1"># the data sent via post request is e.g. {&#39;name&#39;: &#39;dummy&#39;, &#39;overall_highscore&#39;: 100}</span>
-</span><span id="L-113"><a href="#L-113"><span class="linenos">113</span></a>    <span class="n">sent_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-</span><span id="L-114"><a href="#L-114"><span class="linenos">114</span></a>    <span class="k">if</span> <span class="n">validate_name</span><span class="p">(</span><span class="n">sent_data</span><span class="p">[</span><span class="s1">&#39;player_name&#39;</span><span class="p">])</span> <span class="o">!=</span> <span class="kc">True</span><span class="p">:</span>
-</span><span id="L-115"><a href="#L-115"><span class="linenos">115</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;Name must be be at least 3 characters and max 20 characters long&quot;</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
-</span><span id="L-116"><a href="#L-116"><span class="linenos">116</span></a>    <span class="n">save_highscore</span><span class="p">(</span><span class="n">sent_data</span><span class="p">[</span><span class="s1">&#39;player_name&#39;</span><span class="p">],</span> <span class="n">sent_data</span><span class="p">[</span><span class="s1">&#39;overall_highscore&#39;</span><span class="p">])</span>
-</span><span id="L-117"><a href="#L-117"><span class="linenos">117</span></a>    <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">201</span><span class="p">)</span>
+</span><span id="L-104"><a href="#L-104"><span class="linenos">104</span></a><span class="sd">        None</span>
+</span><span id="L-105"><a href="#L-105"><span class="linenos">105</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-106"><a href="#L-106"><span class="linenos">106</span></a>    <span class="n">blob</span> <span class="o">=</span> <span class="n">bucket</span><span class="o">.</span><span class="n">blob</span><span class="p">(</span><span class="s1">&#39;highscores.json&#39;</span><span class="p">)</span>
+</span><span id="L-107"><a href="#L-107"><span class="linenos">107</span></a>    <span class="n">blob</span><span class="o">.</span><span class="n">upload_from_string</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">content_type</span><span class="p">)</span>
+</span><span id="L-108"><a href="#L-108"><span class="linenos">108</span></a>
+</span><span id="L-109"><a href="#L-109"><span class="linenos">109</span></a><span class="k">def</span> <span class="nf">validate_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+</span><span id="L-110"><a href="#L-110"><span class="linenos">110</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-111"><a href="#L-111"><span class="linenos">111</span></a><span class="sd">    Validates a name string.</span>
+</span><span id="L-112"><a href="#L-112"><span class="linenos">112</span></a>
+</span><span id="L-113"><a href="#L-113"><span class="linenos">113</span></a><span class="sd">    Args:</span>
+</span><span id="L-114"><a href="#L-114"><span class="linenos">114</span></a><span class="sd">        name (str): The name string to be validated.</span>
+</span><span id="L-115"><a href="#L-115"><span class="linenos">115</span></a>
+</span><span id="L-116"><a href="#L-116"><span class="linenos">116</span></a><span class="sd">    Returns:</span>
+</span><span id="L-117"><a href="#L-117"><span class="linenos">117</span></a><span class="sd">        bool: True if the name is valid, False otherwise.</span>
 </span><span id="L-118"><a href="#L-118"><span class="linenos">118</span></a>
-</span><span id="L-119"><a href="#L-119"><span class="linenos">119</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/highscores/&lt;int:the_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;DELETE&#39;</span><span class="p">])</span>
-</span><span id="L-120"><a href="#L-120"><span class="linenos">120</span></a><span class="k">def</span> <span class="nf">delete_highscore</span><span class="p">(</span><span class="n">the_id</span><span class="p">):</span>
-</span><span id="L-121"><a href="#L-121"><span class="linenos">121</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-122"><a href="#L-122"><span class="linenos">122</span></a><span class="sd">    Deletes a highscore entry for a player with the given ID.</span>
-</span><span id="L-123"><a href="#L-123"><span class="linenos">123</span></a>
-</span><span id="L-124"><a href="#L-124"><span class="linenos">124</span></a><span class="sd">    Args:</span>
-</span><span id="L-125"><a href="#L-125"><span class="linenos">125</span></a><span class="sd">        the_id (int): The ID of the player whose highscore is to be deleted.</span>
-</span><span id="L-126"><a href="#L-126"><span class="linenos">126</span></a>
-</span><span id="L-127"><a href="#L-127"><span class="linenos">127</span></a><span class="sd">    Returns:</span>
-</span><span id="L-128"><a href="#L-128"><span class="linenos">128</span></a><span class="sd">        Response: A Flask response object with a 204 status code on successful deletion,</span>
-</span><span id="L-129"><a href="#L-129"><span class="linenos">129</span></a><span class="sd">        or a response object with 404 status code if the player ID is not found.</span>
-</span><span id="L-130"><a href="#L-130"><span class="linenos">130</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-131"><a href="#L-131"><span class="linenos">131</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
-</span><span id="L-132"><a href="#L-132"><span class="linenos">132</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
-</span><span id="L-133"><a href="#L-133"><span class="linenos">133</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
-</span><span id="L-134"><a href="#L-134"><span class="linenos">134</span></a>    <span class="c1"># Before deletion, it has to be made sure that</span>
-</span><span id="L-135"><a href="#L-135"><span class="linenos">135</span></a>    <span class="c1"># the id of a player exists. Otherwise, a response</span>
-</span><span id="L-136"><a href="#L-136"><span class="linenos">136</span></a>    <span class="c1"># with status code 404 will be sent</span>
-</span><span id="L-137"><a href="#L-137"><span class="linenos">137</span></a>    <span class="n">player_data</span> <span class="o">=</span> <span class="n">fetch_highscore</span><span class="p">(</span><span class="n">the_id</span><span class="p">)</span>
-</span><span id="L-138"><a href="#L-138"><span class="linenos">138</span></a>    <span class="k">if</span> <span class="n">player_data</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="L-139"><a href="#L-139"><span class="linenos">139</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">404</span><span class="p">)</span>
-</span><span id="L-140"><a href="#L-140"><span class="linenos">140</span></a>    <span class="n">remove_highscore</span><span class="p">(</span><span class="n">the_id</span><span class="p">)</span>
-</span><span id="L-141"><a href="#L-141"><span class="linenos">141</span></a>    <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">204</span><span class="p">)</span>
-</span><span id="L-142"><a href="#L-142"><span class="linenos">142</span></a>
-</span><span id="L-143"><a href="#L-143"><span class="linenos">143</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/highscores&#39;</span><span class="p">)</span>
-</span><span id="L-144"><a href="#L-144"><span class="linenos">144</span></a><span class="k">def</span> <span class="nf">show_highscores</span><span class="p">():</span>
-</span><span id="L-145"><a href="#L-145"><span class="linenos">145</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-146"><a href="#L-146"><span class="linenos">146</span></a><span class="sd">    Renders the highscores page with optional sorting and limiting options.</span>
-</span><span id="L-147"><a href="#L-147"><span class="linenos">147</span></a>
-</span><span id="L-148"><a href="#L-148"><span class="linenos">148</span></a><span class="sd">    Returns:</span>
-</span><span id="L-149"><a href="#L-149"><span class="linenos">149</span></a><span class="sd">        Response: A Flask response object containing the rendered highscores page</span>
-</span><span id="L-150"><a href="#L-150"><span class="linenos">150</span></a><span class="sd">        with optional sorting and limiting options applied.</span>
-</span><span id="L-151"><a href="#L-151"><span class="linenos">151</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-152"><a href="#L-152"><span class="linenos">152</span></a>    <span class="c1"># The highscore page doesn&#39;t need password</span>
-</span><span id="L-153"><a href="#L-153"><span class="linenos">153</span></a>    <span class="n">limit</span> <span class="o">=</span> <span class="mi">100</span>
-</span><span id="L-154"><a href="#L-154"><span class="linenos">154</span></a>    <span class="n">sort</span> <span class="o">=</span> <span class="s2">&quot;desc&quot;</span>
-</span><span id="L-155"><a href="#L-155"><span class="linenos">155</span></a>    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sort&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a>        <span class="n">sort</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sort&quot;</span><span class="p">)</span>
-</span><span id="L-157"><a href="#L-157"><span class="linenos">157</span></a>    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;limit&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a>        <span class="n">limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;limit&quot;</span><span class="p">))</span>
-</span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a>    <span class="n">highscores</span> <span class="o">=</span> <span class="n">fetch_highscores</span><span class="p">(</span><span class="n">limit</span><span class="p">,</span> <span class="n">sort</span><span class="p">)</span>
-</span><span id="L-160"><a href="#L-160"><span class="linenos">160</span></a>    <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s2">&quot;highscores.html&quot;</span><span class="p">,</span> <span class="n">highscores</span><span class="o">=</span><span class="n">highscores</span><span class="p">)</span>
-</span><span id="L-161"><a href="#L-161"><span class="linenos">161</span></a>    
-</span><span id="L-162"><a href="#L-162"><span class="linenos">162</span></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-</span><span id="L-163"><a href="#L-163"><span class="linenos">163</span></a>    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="L-119"><a href="#L-119"><span class="linenos">119</span></a><span class="sd">    Raises:</span>
+</span><span id="L-120"><a href="#L-120"><span class="linenos">120</span></a><span class="sd">        None</span>
+</span><span id="L-121"><a href="#L-121"><span class="linenos">121</span></a>
+</span><span id="L-122"><a href="#L-122"><span class="linenos">122</span></a><span class="sd">    Example:</span>
+</span><span id="L-123"><a href="#L-123"><span class="linenos">123</span></a><span class="sd">        &gt;&gt;&gt; validate_name(&quot;John Doe&quot;)</span>
+</span><span id="L-124"><a href="#L-124"><span class="linenos">124</span></a><span class="sd">        True</span>
+</span><span id="L-125"><a href="#L-125"><span class="linenos">125</span></a><span class="sd">        &gt;&gt;&gt; validate_name(&quot;A&quot;)</span>
+</span><span id="L-126"><a href="#L-126"><span class="linenos">126</span></a><span class="sd">        False</span>
+</span><span id="L-127"><a href="#L-127"><span class="linenos">127</span></a><span class="sd">        &gt;&gt;&gt; validate_name(&quot;This is a very long name&quot;)</span>
+</span><span id="L-128"><a href="#L-128"><span class="linenos">128</span></a><span class="sd">        False</span>
+</span><span id="L-129"><a href="#L-129"><span class="linenos">129</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-130"><a href="#L-130"><span class="linenos">130</span></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">20</span> <span class="ow">or</span> <span class="mi">2</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+</span><span id="L-131"><a href="#L-131"><span class="linenos">131</span></a>        <span class="k">return</span> <span class="kc">False</span>
+</span><span id="L-132"><a href="#L-132"><span class="linenos">132</span></a>    <span class="k">return</span> <span class="kc">True</span>
+</span><span id="L-133"><a href="#L-133"><span class="linenos">133</span></a>
+</span><span id="L-134"><a href="#L-134"><span class="linenos">134</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+</span><span id="L-135"><a href="#L-135"><span class="linenos">135</span></a><span class="k">def</span> <span class="nf">root</span><span class="p">():</span>
+</span><span id="L-136"><a href="#L-136"><span class="linenos">136</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-137"><a href="#L-137"><span class="linenos">137</span></a><span class="sd">    Route for the root URL (&quot;/&quot;).</span>
+</span><span id="L-138"><a href="#L-138"><span class="linenos">138</span></a>
+</span><span id="L-139"><a href="#L-139"><span class="linenos">139</span></a><span class="sd">    Returns:</span>
+</span><span id="L-140"><a href="#L-140"><span class="linenos">140</span></a><span class="sd">        str: A string with a greeting message.</span>
+</span><span id="L-141"><a href="#L-141"><span class="linenos">141</span></a>
+</span><span id="L-142"><a href="#L-142"><span class="linenos">142</span></a><span class="sd">    Raises:</span>
+</span><span id="L-143"><a href="#L-143"><span class="linenos">143</span></a><span class="sd">        None</span>
+</span><span id="L-144"><a href="#L-144"><span class="linenos">144</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-145"><a href="#L-145"><span class="linenos">145</span></a>    <span class="k">return</span> <span class="s2">&quot;&lt;h1&gt;:)&lt;/h1&gt;&quot;</span>
+</span><span id="L-146"><a href="#L-146"><span class="linenos">146</span></a>
+</span><span id="L-147"><a href="#L-147"><span class="linenos">147</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/api/highscores&quot;</span><span class="p">)</span>
+</span><span id="L-148"><a href="#L-148"><span class="linenos">148</span></a><span class="k">def</span> <span class="nf">get_highscores</span><span class="p">():</span>
+</span><span id="L-149"><a href="#L-149"><span class="linenos">149</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-150"><a href="#L-150"><span class="linenos">150</span></a><span class="sd">    Route for getting highscores via API.</span>
+</span><span id="L-151"><a href="#L-151"><span class="linenos">151</span></a>
+</span><span id="L-152"><a href="#L-152"><span class="linenos">152</span></a><span class="sd">    Returns:</span>
+</span><span id="L-153"><a href="#L-153"><span class="linenos">153</span></a><span class="sd">        Response: A Flask Response object containing highscores data or an error message.</span>
+</span><span id="L-154"><a href="#L-154"><span class="linenos">154</span></a>
+</span><span id="L-155"><a href="#L-155"><span class="linenos">155</span></a><span class="sd">    Raises:</span>
+</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a><span class="sd">        None</span>
+</span><span id="L-157"><a href="#L-157"><span class="linenos">157</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
+</span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
+</span><span id="L-160"><a href="#L-160"><span class="linenos">160</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
+</span><span id="L-161"><a href="#L-161"><span class="linenos">161</span></a>    <span class="n">highscores</span> <span class="o">=</span> <span class="n">fetch_highscores_from_firebase</span><span class="p">()</span>
+</span><span id="L-162"><a href="#L-162"><span class="linenos">162</span></a>    <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">highscores</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+</span><span id="L-163"><a href="#L-163"><span class="linenos">163</span></a>
+</span><span id="L-164"><a href="#L-164"><span class="linenos">164</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/highscores/&lt;int:the_id&gt;&#39;</span><span class="p">)</span>
+</span><span id="L-165"><a href="#L-165"><span class="linenos">165</span></a><span class="k">def</span> <span class="nf">get_players_highscore</span><span class="p">(</span><span class="n">the_id</span><span class="p">):</span>
+</span><span id="L-166"><a href="#L-166"><span class="linenos">166</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-167"><a href="#L-167"><span class="linenos">167</span></a><span class="sd">    Route for getting a specific player&#39;s highscore via API.</span>
+</span><span id="L-168"><a href="#L-168"><span class="linenos">168</span></a>
+</span><span id="L-169"><a href="#L-169"><span class="linenos">169</span></a><span class="sd">    Args:</span>
+</span><span id="L-170"><a href="#L-170"><span class="linenos">170</span></a><span class="sd">        the_id (int): The ID of the player.</span>
+</span><span id="L-171"><a href="#L-171"><span class="linenos">171</span></a>
+</span><span id="L-172"><a href="#L-172"><span class="linenos">172</span></a><span class="sd">    Returns:</span>
+</span><span id="L-173"><a href="#L-173"><span class="linenos">173</span></a><span class="sd">        Response: A Flask Response object containing the player&#39;s highscore data or an error message.</span>
+</span><span id="L-174"><a href="#L-174"><span class="linenos">174</span></a>
+</span><span id="L-175"><a href="#L-175"><span class="linenos">175</span></a><span class="sd">    Raises:</span>
+</span><span id="L-176"><a href="#L-176"><span class="linenos">176</span></a><span class="sd">        NotFound: If the player with the given ID is not found.</span>
+</span><span id="L-177"><a href="#L-177"><span class="linenos">177</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-178"><a href="#L-178"><span class="linenos">178</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
+</span><span id="L-179"><a href="#L-179"><span class="linenos">179</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
+</span><span id="L-180"><a href="#L-180"><span class="linenos">180</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
+</span><span id="L-181"><a href="#L-181"><span class="linenos">181</span></a>    <span class="n">highscore</span> <span class="o">=</span> <span class="n">fetch_a_highscore_based_on_id</span><span class="p">(</span><span class="n">the_id</span><span class="p">,</span> <span class="n">fetch_highscores_from_firebase</span><span class="p">())</span>
+</span><span id="L-182"><a href="#L-182"><span class="linenos">182</span></a>    <span class="k">if</span> <span class="n">highscore</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-183"><a href="#L-183"><span class="linenos">183</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="n">highscore</span><span class="p">),</span> <span class="mi">200</span><span class="p">)</span>
+</span><span id="L-184"><a href="#L-184"><span class="linenos">184</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="L-185"><a href="#L-185"><span class="linenos">185</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">({</span><span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="s1">&#39;Player not found.&#39;</span><span class="p">}),</span> <span class="mi">404</span><span class="p">)</span>
+</span><span id="L-186"><a href="#L-186"><span class="linenos">186</span></a>
+</span><span id="L-187"><a href="#L-187"><span class="linenos">187</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/api/highscores&quot;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+</span><span id="L-188"><a href="#L-188"><span class="linenos">188</span></a><span class="k">def</span> <span class="nf">add_highscore</span><span class="p">():</span>
+</span><span id="L-189"><a href="#L-189"><span class="linenos">189</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-190"><a href="#L-190"><span class="linenos">190</span></a><span class="sd">    Route for adding a player&#39;s highscore via API.</span>
+</span><span id="L-191"><a href="#L-191"><span class="linenos">191</span></a>
+</span><span id="L-192"><a href="#L-192"><span class="linenos">192</span></a><span class="sd">    Returns:</span>
+</span><span id="L-193"><a href="#L-193"><span class="linenos">193</span></a><span class="sd">        Response: A Flask Response object indicating success or failure of the request.</span>
+</span><span id="L-194"><a href="#L-194"><span class="linenos">194</span></a>
+</span><span id="L-195"><a href="#L-195"><span class="linenos">195</span></a><span class="sd">    Raises:</span>
+</span><span id="L-196"><a href="#L-196"><span class="linenos">196</span></a><span class="sd">        None</span>
+</span><span id="L-197"><a href="#L-197"><span class="linenos">197</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-198"><a href="#L-198"><span class="linenos">198</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
+</span><span id="L-199"><a href="#L-199"><span class="linenos">199</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
+</span><span id="L-200"><a href="#L-200"><span class="linenos">200</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
+</span><span id="L-201"><a href="#L-201"><span class="linenos">201</span></a>    <span class="c1"># the data sent via post request is e.g. {&#39;player_name&#39;: &#39;dummy&#39;, &#39;overall_highscore&#39;: 100}</span>
+</span><span id="L-202"><a href="#L-202"><span class="linenos">202</span></a>    <span class="n">received_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+</span><span id="L-203"><a href="#L-203"><span class="linenos">203</span></a>    <span class="k">if</span> <span class="n">validate_name</span><span class="p">(</span><span class="n">received_data</span><span class="p">[</span><span class="s1">&#39;player_name&#39;</span><span class="p">])</span> <span class="o">!=</span> <span class="kc">True</span><span class="p">:</span>
+</span><span id="L-204"><a href="#L-204"><span class="linenos">204</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;Name must be be at least 3 characters and max 20 characters long&quot;</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
+</span><span id="L-205"><a href="#L-205"><span class="linenos">205</span></a>    <span class="n">highscores</span> <span class="o">=</span> <span class="n">fetch_highscores_from_firebase</span><span class="p">()</span>
+</span><span id="L-206"><a href="#L-206"><span class="linenos">206</span></a>    <span class="c1"># create id for highscore</span>
+</span><span id="L-207"><a href="#L-207"><span class="linenos">207</span></a>    <span class="c1"># new highscore id is initially array length + 1</span>
+</span><span id="L-208"><a href="#L-208"><span class="linenos">208</span></a>    <span class="nb">id</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">highscores</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+</span><span id="L-209"><a href="#L-209"><span class="linenos">209</span></a>    <span class="c1"># check if there is a duplicate id</span>
+</span><span id="L-210"><a href="#L-210"><span class="linenos">210</span></a>    <span class="n">duplicate</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="L-211"><a href="#L-211"><span class="linenos">211</span></a>    <span class="k">while</span> <span class="n">duplicate</span><span class="p">:</span>
+</span><span id="L-212"><a href="#L-212"><span class="linenos">212</span></a>        <span class="n">player_data</span> <span class="o">=</span> <span class="n">fetch_a_highscore_based_on_id</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">highscores</span><span class="p">)</span>
+</span><span id="L-213"><a href="#L-213"><span class="linenos">213</span></a>        <span class="k">if</span> <span class="n">player_data</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-214"><a href="#L-214"><span class="linenos">214</span></a>            <span class="nb">id</span> <span class="o">=</span> <span class="nb">id</span> <span class="o">+</span> <span class="mi">1</span>
+</span><span id="L-215"><a href="#L-215"><span class="linenos">215</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="L-216"><a href="#L-216"><span class="linenos">216</span></a>            <span class="n">duplicate</span> <span class="o">=</span> <span class="kc">False</span>
+</span><span id="L-217"><a href="#L-217"><span class="linenos">217</span></a>    <span class="n">new_highscore</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="nb">id</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">received_data</span><span class="p">[</span><span class="s1">&#39;player_name&#39;</span><span class="p">],</span> <span class="s2">&quot;highscore&quot;</span><span class="p">:</span> <span class="n">received_data</span><span class="p">[</span><span class="s1">&#39;overall_highscore&#39;</span><span class="p">]}</span>
+</span><span id="L-218"><a href="#L-218"><span class="linenos">218</span></a>    <span class="c1"># append new highscore to highscores list and jsonify it</span>
+</span><span id="L-219"><a href="#L-219"><span class="linenos">219</span></a>    <span class="n">highscores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_highscore</span><span class="p">)</span>
+</span><span id="L-220"><a href="#L-220"><span class="linenos">220</span></a>    <span class="n">highscores_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">highscores</span><span class="p">)</span>
+</span><span id="L-221"><a href="#L-221"><span class="linenos">221</span></a>    <span class="c1"># Upload the updated highscores file to Firebase Storage</span>
+</span><span id="L-222"><a href="#L-222"><span class="linenos">222</span></a>    <span class="n">upload_to_firebase</span><span class="p">(</span><span class="n">content</span> <span class="o">=</span> <span class="n">highscores_json</span><span class="p">)</span>
+</span><span id="L-223"><a href="#L-223"><span class="linenos">223</span></a>    <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">({</span><span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="s1">&#39;Highscore added successfully!&#39;</span><span class="p">}),</span> <span class="mi">201</span><span class="p">)</span>
+</span><span id="L-224"><a href="#L-224"><span class="linenos">224</span></a>
+</span><span id="L-225"><a href="#L-225"><span class="linenos">225</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/highscores/&lt;int:the_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;DELETE&#39;</span><span class="p">])</span>
+</span><span id="L-226"><a href="#L-226"><span class="linenos">226</span></a><span class="k">def</span> <span class="nf">delete_highscore</span><span class="p">(</span><span class="n">the_id</span><span class="p">):</span>
+</span><span id="L-227"><a href="#L-227"><span class="linenos">227</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-228"><a href="#L-228"><span class="linenos">228</span></a><span class="sd">    Deletes a highscore entry for a player with the given ID.</span>
+</span><span id="L-229"><a href="#L-229"><span class="linenos">229</span></a>
+</span><span id="L-230"><a href="#L-230"><span class="linenos">230</span></a><span class="sd">    Args:</span>
+</span><span id="L-231"><a href="#L-231"><span class="linenos">231</span></a><span class="sd">        the_id (int): The ID of the player whose highscore is to be deleted.</span>
+</span><span id="L-232"><a href="#L-232"><span class="linenos">232</span></a>
+</span><span id="L-233"><a href="#L-233"><span class="linenos">233</span></a><span class="sd">    Returns:</span>
+</span><span id="L-234"><a href="#L-234"><span class="linenos">234</span></a><span class="sd">        Response: A Flask response object with a 204 status code on successful deletion,</span>
+</span><span id="L-235"><a href="#L-235"><span class="linenos">235</span></a><span class="sd">        or a response object with 404 status code if the player ID is not found.</span>
+</span><span id="L-236"><a href="#L-236"><span class="linenos">236</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-237"><a href="#L-237"><span class="linenos">237</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
+</span><span id="L-238"><a href="#L-238"><span class="linenos">238</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
+</span><span id="L-239"><a href="#L-239"><span class="linenos">239</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
+</span><span id="L-240"><a href="#L-240"><span class="linenos">240</span></a>    <span class="c1"># Before deletion, it has to be made sure that</span>
+</span><span id="L-241"><a href="#L-241"><span class="linenos">241</span></a>    <span class="c1"># the id of a player exists. Otherwise, a response</span>
+</span><span id="L-242"><a href="#L-242"><span class="linenos">242</span></a>    <span class="c1"># with status code 404 will be sent</span>
+</span><span id="L-243"><a href="#L-243"><span class="linenos">243</span></a>    <span class="n">highscores</span> <span class="o">=</span> <span class="n">fetch_highscores_from_firebase</span><span class="p">()</span>
+</span><span id="L-244"><a href="#L-244"><span class="linenos">244</span></a>    <span class="n">player_data</span> <span class="o">=</span> <span class="n">fetch_a_highscore_based_on_id</span><span class="p">(</span><span class="n">the_id</span><span class="p">,</span> <span class="n">highscores</span><span class="p">)</span>
+</span><span id="L-245"><a href="#L-245"><span class="linenos">245</span></a>    <span class="k">if</span> <span class="n">player_data</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-246"><a href="#L-246"><span class="linenos">246</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">404</span><span class="p">)</span>
+</span><span id="L-247"><a href="#L-247"><span class="linenos">247</span></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">highscores</span><span class="p">)):</span>
+</span><span id="L-248"><a href="#L-248"><span class="linenos">248</span></a>        <span class="k">if</span> <span class="n">highscores</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">the_id</span><span class="p">:</span>
+</span><span id="L-249"><a href="#L-249"><span class="linenos">249</span></a>            <span class="n">highscores</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+</span><span id="L-250"><a href="#L-250"><span class="linenos">250</span></a>            <span class="k">break</span>
+</span><span id="L-251"><a href="#L-251"><span class="linenos">251</span></a>    <span class="n">highscores_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">highscores</span><span class="p">)</span>
+</span><span id="L-252"><a href="#L-252"><span class="linenos">252</span></a>    <span class="c1"># Upload the updated highscores file to Firebase Storage</span>
+</span><span id="L-253"><a href="#L-253"><span class="linenos">253</span></a>    <span class="n">upload_to_firebase</span><span class="p">(</span><span class="n">content</span> <span class="o">=</span> <span class="n">highscores_json</span><span class="p">)</span>
+</span><span id="L-254"><a href="#L-254"><span class="linenos">254</span></a>    <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">204</span><span class="p">)</span>
+</span><span id="L-255"><a href="#L-255"><span class="linenos">255</span></a>
+</span><span id="L-256"><a href="#L-256"><span class="linenos">256</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/highscores&#39;</span><span class="p">)</span>
+</span><span id="L-257"><a href="#L-257"><span class="linenos">257</span></a><span class="k">def</span> <span class="nf">show_highscores</span><span class="p">():</span>
+</span><span id="L-258"><a href="#L-258"><span class="linenos">258</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-259"><a href="#L-259"><span class="linenos">259</span></a><span class="sd">    Renders the highscores page with optional sorting and limiting options.</span>
+</span><span id="L-260"><a href="#L-260"><span class="linenos">260</span></a>
+</span><span id="L-261"><a href="#L-261"><span class="linenos">261</span></a><span class="sd">    Returns:</span>
+</span><span id="L-262"><a href="#L-262"><span class="linenos">262</span></a><span class="sd">        Response: A Flask response object containing the rendered highscores page</span>
+</span><span id="L-263"><a href="#L-263"><span class="linenos">263</span></a><span class="sd">        with optional sorting and limiting options applied.</span>
+</span><span id="L-264"><a href="#L-264"><span class="linenos">264</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-265"><a href="#L-265"><span class="linenos">265</span></a>    <span class="c1"># check, if there is a sort attribute with request</span>
+</span><span id="L-266"><a href="#L-266"><span class="linenos">266</span></a>    <span class="n">limit</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span id="L-267"><a href="#L-267"><span class="linenos">267</span></a>    <span class="n">sort</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+</span><span id="L-268"><a href="#L-268"><span class="linenos">268</span></a>    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sort&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-269"><a href="#L-269"><span class="linenos">269</span></a>        <span class="n">sort</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sort&quot;</span><span class="p">)</span>
+</span><span id="L-270"><a href="#L-270"><span class="linenos">270</span></a>    <span class="c1"># check, if there is a limit attribute with request</span>
+</span><span id="L-271"><a href="#L-271"><span class="linenos">271</span></a>    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;limit&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-272"><a href="#L-272"><span class="linenos">272</span></a>        <span class="n">limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;limit&quot;</span><span class="p">))</span>
+</span><span id="L-273"><a href="#L-273"><span class="linenos">273</span></a>    <span class="c1">#  check, if limit is within 1-100 range, else defaults to 100</span>
+</span><span id="L-274"><a href="#L-274"><span class="linenos">274</span></a>    <span class="k">if</span> <span class="n">limit</span> <span class="o">&gt;</span> <span class="mi">100</span> <span class="ow">or</span> <span class="n">limit</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="L-275"><a href="#L-275"><span class="linenos">275</span></a>        <span class="n">limit</span> <span class="o">=</span> <span class="mi">100</span>
+</span><span id="L-276"><a href="#L-276"><span class="linenos">276</span></a>    <span class="c1"># if sort is not &quot;none&quot;, &quot;asc&quot;, or &quot;desc&quot;, then it will be &quot;desc&quot;</span>
+</span><span id="L-277"><a href="#L-277"><span class="linenos">277</span></a>    <span class="c1"># by default, meaning the highscores list will be shown in descending order,</span>
+</span><span id="L-278"><a href="#L-278"><span class="linenos">278</span></a>    <span class="c1"># meaning highest score is first, and so on.</span>
+</span><span id="L-279"><a href="#L-279"><span class="linenos">279</span></a>    <span class="k">if</span> <span class="n">sort</span> <span class="o">!=</span> <span class="s2">&quot;desc&quot;</span><span class="p">:</span>
+</span><span id="L-280"><a href="#L-280"><span class="linenos">280</span></a>        <span class="k">if</span> <span class="n">sort</span> <span class="o">!=</span> <span class="s2">&quot;asc&quot;</span><span class="p">:</span>
+</span><span id="L-281"><a href="#L-281"><span class="linenos">281</span></a>            <span class="k">if</span> <span class="n">sort</span> <span class="o">!=</span> <span class="s2">&quot;none&quot;</span><span class="p">:</span>
+</span><span id="L-282"><a href="#L-282"><span class="linenos">282</span></a>                <span class="n">sort</span> <span class="o">=</span> <span class="s2">&quot;desc&quot;</span>
+</span><span id="L-283"><a href="#L-283"><span class="linenos">283</span></a>    <span class="c1"># download highscores from firebase</span>
+</span><span id="L-284"><a href="#L-284"><span class="linenos">284</span></a>    <span class="n">highscores</span> <span class="o">=</span> <span class="n">fetch_highscores_from_firebase</span><span class="p">()</span>
+</span><span id="L-285"><a href="#L-285"><span class="linenos">285</span></a>    <span class="c1"># this variable determines whether the max range of list objects</span>
+</span><span id="L-286"><a href="#L-286"><span class="linenos">286</span></a>    <span class="c1"># is the limit or length of the list, dependent on whether the limit</span>
+</span><span id="L-287"><a href="#L-287"><span class="linenos">287</span></a>    <span class="c1"># is greater than the length of the list or not</span>
+</span><span id="L-288"><a href="#L-288"><span class="linenos">288</span></a>    <span class="n">max_range</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">highscores</span><span class="p">)</span> <span class="k">if</span> <span class="n">limit</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">highscores</span><span class="p">)</span> <span class="k">else</span> <span class="n">limit</span>
+</span><span id="L-289"><a href="#L-289"><span class="linenos">289</span></a>    <span class="c1"># a list containing dicts will be returned</span>
+</span><span id="L-290"><a href="#L-290"><span class="linenos">290</span></a>    <span class="n">returned_highscores</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="L-291"><a href="#L-291"><span class="linenos">291</span></a>    <span class="k">if</span> <span class="n">sort</span> <span class="o">==</span> <span class="s2">&quot;none&quot;</span><span class="p">:</span>
+</span><span id="L-292"><a href="#L-292"><span class="linenos">292</span></a>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_range</span><span class="p">):</span>
+</span><span id="L-293"><a href="#L-293"><span class="linenos">293</span></a>            <span class="n">returned_highscores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">highscores</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+</span><span id="L-294"><a href="#L-294"><span class="linenos">294</span></a>    <span class="k">if</span> <span class="n">sort</span> <span class="o">==</span> <span class="s2">&quot;asc&quot;</span><span class="p">:</span>
+</span><span id="L-295"><a href="#L-295"><span class="linenos">295</span></a>        <span class="n">sorted_highscores</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">highscores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;highscore&#39;</span><span class="p">])</span>
+</span><span id="L-296"><a href="#L-296"><span class="linenos">296</span></a>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_range</span><span class="p">):</span>
+</span><span id="L-297"><a href="#L-297"><span class="linenos">297</span></a>            <span class="n">returned_highscores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sorted_highscores</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+</span><span id="L-298"><a href="#L-298"><span class="linenos">298</span></a>        <span class="k">return</span> <span class="n">highscores</span>
+</span><span id="L-299"><a href="#L-299"><span class="linenos">299</span></a>    <span class="k">if</span> <span class="n">sort</span> <span class="o">==</span> <span class="s2">&quot;desc&quot;</span><span class="p">:</span>
+</span><span id="L-300"><a href="#L-300"><span class="linenos">300</span></a>        <span class="n">sorted_highscores</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">highscores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;highscore&#39;</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="L-301"><a href="#L-301"><span class="linenos">301</span></a>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_range</span><span class="p">):</span>
+</span><span id="L-302"><a href="#L-302"><span class="linenos">302</span></a>            <span class="n">returned_highscores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sorted_highscores</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+</span><span id="L-303"><a href="#L-303"><span class="linenos">303</span></a>    <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s2">&quot;highscores.html&quot;</span><span class="p">,</span> <span class="n">highscores</span><span class="o">=</span><span class="n">returned_highscores</span><span class="p">)</span>
+</span><span id="L-304"><a href="#L-304"><span class="linenos">304</span></a>    
+</span><span id="L-305"><a href="#L-305"><span class="linenos">305</span></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+</span><span id="L-306"><a href="#L-306"><span class="linenos">306</span></a>    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -243,26 +398,26 @@ app    </h1>
 
     </div>
     <a class="headerlink" href="#check_api_key"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="check_api_key-19"><a href="#check_api_key-19"><span class="linenos">19</span></a><span class="k">def</span> <span class="nf">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">):</span>
-</span><span id="check_api_key-20"><a href="#check_api_key-20"><span class="linenos">20</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="check_api_key-21"><a href="#check_api_key-21"><span class="linenos">21</span></a><span class="sd">    Check the validity of the password sent with requests to the backend.</span>
-</span><span id="check_api_key-22"><a href="#check_api_key-22"><span class="linenos">22</span></a>
-</span><span id="check_api_key-23"><a href="#check_api_key-23"><span class="linenos">23</span></a><span class="sd">    Args:</span>
-</span><span id="check_api_key-24"><a href="#check_api_key-24"><span class="linenos">24</span></a><span class="sd">        pw (str): The password string to be checked.</span>
-</span><span id="check_api_key-25"><a href="#check_api_key-25"><span class="linenos">25</span></a>
-</span><span id="check_api_key-26"><a href="#check_api_key-26"><span class="linenos">26</span></a><span class="sd">    Returns:</span>
-</span><span id="check_api_key-27"><a href="#check_api_key-27"><span class="linenos">27</span></a><span class="sd">        bool: True if the password is valid, False otherwise.</span>
-</span><span id="check_api_key-28"><a href="#check_api_key-28"><span class="linenos">28</span></a>
-</span><span id="check_api_key-29"><a href="#check_api_key-29"><span class="linenos">29</span></a><span class="sd">    Raises:</span>
-</span><span id="check_api_key-30"><a href="#check_api_key-30"><span class="linenos">30</span></a><span class="sd">        None</span>
-</span><span id="check_api_key-31"><a href="#check_api_key-31"><span class="linenos">31</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="check_api_key-32"><a href="#check_api_key-32"><span class="linenos">32</span></a>    <span class="c1"># hashing the API_KEY that has been turned to bytes array</span>
-</span><span id="check_api_key-33"><a href="#check_api_key-33"><span class="linenos">33</span></a>    <span class="c1"># with randomly generated salt</span>
-</span><span id="check_api_key-34"><a href="#check_api_key-34"><span class="linenos">34</span></a>    <span class="nb">hash</span> <span class="o">=</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">hashpw</span><span class="p">(</span><span class="n">API_KEY</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">),</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">gensalt</span><span class="p">())</span>
-</span><span id="check_api_key-35"><a href="#check_api_key-35"><span class="linenos">35</span></a>    <span class="c1"># checking password received as parameter with api key</span>
-</span><span id="check_api_key-36"><a href="#check_api_key-36"><span class="linenos">36</span></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">checkpw</span><span class="p">(</span><span class="n">pw</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">),</span> <span class="nb">hash</span><span class="p">)</span>
-</span><span id="check_api_key-37"><a href="#check_api_key-37"><span class="linenos">37</span></a>    <span class="c1"># returned values are boolean type</span>
-</span><span id="check_api_key-38"><a href="#check_api_key-38"><span class="linenos">38</span></a>    <span class="k">return</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">result</span> <span class="k">else</span> <span class="kc">False</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="check_api_key-45"><a href="#check_api_key-45"><span class="linenos">45</span></a><span class="k">def</span> <span class="nf">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">):</span>
+</span><span id="check_api_key-46"><a href="#check_api_key-46"><span class="linenos">46</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="check_api_key-47"><a href="#check_api_key-47"><span class="linenos">47</span></a><span class="sd">    Check the validity of the password sent with requests to the backend.</span>
+</span><span id="check_api_key-48"><a href="#check_api_key-48"><span class="linenos">48</span></a>
+</span><span id="check_api_key-49"><a href="#check_api_key-49"><span class="linenos">49</span></a><span class="sd">    Args:</span>
+</span><span id="check_api_key-50"><a href="#check_api_key-50"><span class="linenos">50</span></a><span class="sd">        pw (str): The password string to be checked.</span>
+</span><span id="check_api_key-51"><a href="#check_api_key-51"><span class="linenos">51</span></a>
+</span><span id="check_api_key-52"><a href="#check_api_key-52"><span class="linenos">52</span></a><span class="sd">    Returns:</span>
+</span><span id="check_api_key-53"><a href="#check_api_key-53"><span class="linenos">53</span></a><span class="sd">        bool: True if the password is valid, False otherwise.</span>
+</span><span id="check_api_key-54"><a href="#check_api_key-54"><span class="linenos">54</span></a>
+</span><span id="check_api_key-55"><a href="#check_api_key-55"><span class="linenos">55</span></a><span class="sd">    Raises:</span>
+</span><span id="check_api_key-56"><a href="#check_api_key-56"><span class="linenos">56</span></a><span class="sd">        None</span>
+</span><span id="check_api_key-57"><a href="#check_api_key-57"><span class="linenos">57</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="check_api_key-58"><a href="#check_api_key-58"><span class="linenos">58</span></a>    <span class="c1"># hashing the API_KEY that has been turned to bytes array</span>
+</span><span id="check_api_key-59"><a href="#check_api_key-59"><span class="linenos">59</span></a>    <span class="c1"># with randomly generated salt</span>
+</span><span id="check_api_key-60"><a href="#check_api_key-60"><span class="linenos">60</span></a>    <span class="nb">hash</span> <span class="o">=</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">hashpw</span><span class="p">(</span><span class="n">API_KEY</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">),</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">gensalt</span><span class="p">())</span>
+</span><span id="check_api_key-61"><a href="#check_api_key-61"><span class="linenos">61</span></a>    <span class="c1"># checking password received as parameter with api key</span>
+</span><span id="check_api_key-62"><a href="#check_api_key-62"><span class="linenos">62</span></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">checkpw</span><span class="p">(</span><span class="n">pw</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">),</span> <span class="nb">hash</span><span class="p">)</span>
+</span><span id="check_api_key-63"><a href="#check_api_key-63"><span class="linenos">63</span></a>    <span class="c1"># returned values are boolean type</span>
+</span><span id="check_api_key-64"><a href="#check_api_key-64"><span class="linenos">64</span></a>    <span class="k">return</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">result</span> <span class="k">else</span> <span class="kc">False</span>
 </span></pre></div>
 
 
@@ -280,6 +435,188 @@ app    </h1>
 
 
                 </section>
+                <section id="fetch_highscores_from_firebase">
+                            <input id="fetch_highscores_from_firebase-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">fetch_highscores_from_firebase</span><span class="signature pdoc-code condensed">(<span class="return-annotation">):</span></span>
+
+                <label class="view-source-button" for="fetch_highscores_from_firebase-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#fetch_highscores_from_firebase"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="fetch_highscores_from_firebase-66"><a href="#fetch_highscores_from_firebase-66"><span class="linenos">66</span></a><span class="k">def</span> <span class="nf">fetch_highscores_from_firebase</span><span class="p">():</span>
+</span><span id="fetch_highscores_from_firebase-67"><a href="#fetch_highscores_from_firebase-67"><span class="linenos">67</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="fetch_highscores_from_firebase-68"><a href="#fetch_highscores_from_firebase-68"><span class="linenos">68</span></a><span class="sd">    Fetches the highscores data from the Firebase storage bucket.</span>
+</span><span id="fetch_highscores_from_firebase-69"><a href="#fetch_highscores_from_firebase-69"><span class="linenos">69</span></a>
+</span><span id="fetch_highscores_from_firebase-70"><a href="#fetch_highscores_from_firebase-70"><span class="linenos">70</span></a><span class="sd">    Returns:</span>
+</span><span id="fetch_highscores_from_firebase-71"><a href="#fetch_highscores_from_firebase-71"><span class="linenos">71</span></a><span class="sd">        dict: The highscores data in dictionary format.</span>
+</span><span id="fetch_highscores_from_firebase-72"><a href="#fetch_highscores_from_firebase-72"><span class="linenos">72</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="fetch_highscores_from_firebase-73"><a href="#fetch_highscores_from_firebase-73"><span class="linenos">73</span></a>    <span class="n">blob</span> <span class="o">=</span> <span class="n">bucket</span><span class="o">.</span><span class="n">blob</span><span class="p">(</span><span class="s1">&#39;highscores.json&#39;</span><span class="p">)</span>
+</span><span id="fetch_highscores_from_firebase-74"><a href="#fetch_highscores_from_firebase-74"><span class="linenos">74</span></a>    <span class="n">content</span> <span class="o">=</span> <span class="n">blob</span><span class="o">.</span><span class="n">download_as_string</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+</span><span id="fetch_highscores_from_firebase-75"><a href="#fetch_highscores_from_firebase-75"><span class="linenos">75</span></a>    <span class="n">highscores</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+</span><span id="fetch_highscores_from_firebase-76"><a href="#fetch_highscores_from_firebase-76"><span class="linenos">76</span></a>    <span class="k">return</span> <span class="n">highscores</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Fetches the highscores data from the Firebase storage bucket.</p>
+
+<p>Returns:
+    dict: The highscores data in dictionary format.</p>
+</div>
+
+
+                </section>
+                <section id="fetch_a_highscore_based_on_id">
+                            <input id="fetch_a_highscore_based_on_id-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">fetch_a_highscore_based_on_id</span><span class="signature pdoc-code condensed">(<span class="param"><span class="nb">id</span>, </span><span class="param"><span class="n">highscores</span></span><span class="return-annotation">):</span></span>
+
+                <label class="view-source-button" for="fetch_a_highscore_based_on_id-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#fetch_a_highscore_based_on_id"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="fetch_a_highscore_based_on_id-78"><a href="#fetch_a_highscore_based_on_id-78"><span class="linenos">78</span></a><span class="k">def</span> <span class="nf">fetch_a_highscore_based_on_id</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">highscores</span><span class="p">):</span>
+</span><span id="fetch_a_highscore_based_on_id-79"><a href="#fetch_a_highscore_based_on_id-79"><span class="linenos">79</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="fetch_a_highscore_based_on_id-80"><a href="#fetch_a_highscore_based_on_id-80"><span class="linenos">80</span></a><span class="sd">    Fetches a specific highscore based on the given id from the highscores data.</span>
+</span><span id="fetch_a_highscore_based_on_id-81"><a href="#fetch_a_highscore_based_on_id-81"><span class="linenos">81</span></a>
+</span><span id="fetch_a_highscore_based_on_id-82"><a href="#fetch_a_highscore_based_on_id-82"><span class="linenos">82</span></a><span class="sd">    Args:</span>
+</span><span id="fetch_a_highscore_based_on_id-83"><a href="#fetch_a_highscore_based_on_id-83"><span class="linenos">83</span></a><span class="sd">        id (str): The id of the highscore to fetch.</span>
+</span><span id="fetch_a_highscore_based_on_id-84"><a href="#fetch_a_highscore_based_on_id-84"><span class="linenos">84</span></a><span class="sd">        highscores (dict): The highscores data in dictionary format.</span>
+</span><span id="fetch_a_highscore_based_on_id-85"><a href="#fetch_a_highscore_based_on_id-85"><span class="linenos">85</span></a>
+</span><span id="fetch_a_highscore_based_on_id-86"><a href="#fetch_a_highscore_based_on_id-86"><span class="linenos">86</span></a><span class="sd">    Returns:</span>
+</span><span id="fetch_a_highscore_based_on_id-87"><a href="#fetch_a_highscore_based_on_id-87"><span class="linenos">87</span></a><span class="sd">        dict: The highscore data in dictionary format.</span>
+</span><span id="fetch_a_highscore_based_on_id-88"><a href="#fetch_a_highscore_based_on_id-88"><span class="linenos">88</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="fetch_a_highscore_based_on_id-89"><a href="#fetch_a_highscore_based_on_id-89"><span class="linenos">89</span></a>    <span class="n">highscore</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="fetch_a_highscore_based_on_id-90"><a href="#fetch_a_highscore_based_on_id-90"><span class="linenos">90</span></a>    <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">highscores</span><span class="p">:</span>
+</span><span id="fetch_a_highscore_based_on_id-91"><a href="#fetch_a_highscore_based_on_id-91"><span class="linenos">91</span></a>        <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="nb">id</span><span class="p">:</span>
+</span><span id="fetch_a_highscore_based_on_id-92"><a href="#fetch_a_highscore_based_on_id-92"><span class="linenos">92</span></a>            <span class="n">highscore</span> <span class="o">=</span> <span class="n">data</span>
+</span><span id="fetch_a_highscore_based_on_id-93"><a href="#fetch_a_highscore_based_on_id-93"><span class="linenos">93</span></a>            <span class="k">break</span>
+</span><span id="fetch_a_highscore_based_on_id-94"><a href="#fetch_a_highscore_based_on_id-94"><span class="linenos">94</span></a>    <span class="k">return</span> <span class="n">highscore</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Fetches a specific highscore based on the given id from the highscores data.</p>
+
+<p>Args:
+    id (str): The id of the highscore to fetch.
+    highscores (dict): The highscores data in dictionary format.</p>
+
+<p>Returns:
+    dict: The highscore data in dictionary format.</p>
+</div>
+
+
+                </section>
+                <section id="upload_to_firebase">
+                            <input id="upload_to_firebase-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">upload_to_firebase</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">content</span>, </span><span class="param"><span class="n">content_type</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span></span><span class="return-annotation">):</span></span>
+
+                <label class="view-source-button" for="upload_to_firebase-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#upload_to_firebase"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="upload_to_firebase-96"><a href="#upload_to_firebase-96"><span class="linenos"> 96</span></a><span class="k">def</span> <span class="nf">upload_to_firebase</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="s2">&quot;application/json&quot;</span><span class="p">):</span>
+</span><span id="upload_to_firebase-97"><a href="#upload_to_firebase-97"><span class="linenos"> 97</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="upload_to_firebase-98"><a href="#upload_to_firebase-98"><span class="linenos"> 98</span></a><span class="sd">    Uploads the given content to the Firebase storage bucket.</span>
+</span><span id="upload_to_firebase-99"><a href="#upload_to_firebase-99"><span class="linenos"> 99</span></a>
+</span><span id="upload_to_firebase-100"><a href="#upload_to_firebase-100"><span class="linenos">100</span></a><span class="sd">    Args:</span>
+</span><span id="upload_to_firebase-101"><a href="#upload_to_firebase-101"><span class="linenos">101</span></a><span class="sd">        content (str): The content to upload.</span>
+</span><span id="upload_to_firebase-102"><a href="#upload_to_firebase-102"><span class="linenos">102</span></a><span class="sd">        content_type (str, optional): The content type. Defaults to &quot;application/json&quot;.</span>
+</span><span id="upload_to_firebase-103"><a href="#upload_to_firebase-103"><span class="linenos">103</span></a>
+</span><span id="upload_to_firebase-104"><a href="#upload_to_firebase-104"><span class="linenos">104</span></a><span class="sd">    Returns:</span>
+</span><span id="upload_to_firebase-105"><a href="#upload_to_firebase-105"><span class="linenos">105</span></a><span class="sd">        None</span>
+</span><span id="upload_to_firebase-106"><a href="#upload_to_firebase-106"><span class="linenos">106</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="upload_to_firebase-107"><a href="#upload_to_firebase-107"><span class="linenos">107</span></a>    <span class="n">blob</span> <span class="o">=</span> <span class="n">bucket</span><span class="o">.</span><span class="n">blob</span><span class="p">(</span><span class="s1">&#39;highscores.json&#39;</span><span class="p">)</span>
+</span><span id="upload_to_firebase-108"><a href="#upload_to_firebase-108"><span class="linenos">108</span></a>    <span class="n">blob</span><span class="o">.</span><span class="n">upload_from_string</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">content_type</span><span class="p">)</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Uploads the given content to the Firebase storage bucket.</p>
+
+<p>Args:
+    content (str): The content to upload.
+    content_type (str, optional): The content type. Defaults to "application/json".</p>
+
+<p>Returns:
+    None</p>
+</div>
+
+
+                </section>
+                <section id="validate_name">
+                            <input id="validate_name-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">validate_name</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">name</span></span><span class="return-annotation">):</span></span>
+
+                <label class="view-source-button" for="validate_name-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#validate_name"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="validate_name-110"><a href="#validate_name-110"><span class="linenos">110</span></a><span class="k">def</span> <span class="nf">validate_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+</span><span id="validate_name-111"><a href="#validate_name-111"><span class="linenos">111</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="validate_name-112"><a href="#validate_name-112"><span class="linenos">112</span></a><span class="sd">    Validates a name string.</span>
+</span><span id="validate_name-113"><a href="#validate_name-113"><span class="linenos">113</span></a>
+</span><span id="validate_name-114"><a href="#validate_name-114"><span class="linenos">114</span></a><span class="sd">    Args:</span>
+</span><span id="validate_name-115"><a href="#validate_name-115"><span class="linenos">115</span></a><span class="sd">        name (str): The name string to be validated.</span>
+</span><span id="validate_name-116"><a href="#validate_name-116"><span class="linenos">116</span></a>
+</span><span id="validate_name-117"><a href="#validate_name-117"><span class="linenos">117</span></a><span class="sd">    Returns:</span>
+</span><span id="validate_name-118"><a href="#validate_name-118"><span class="linenos">118</span></a><span class="sd">        bool: True if the name is valid, False otherwise.</span>
+</span><span id="validate_name-119"><a href="#validate_name-119"><span class="linenos">119</span></a>
+</span><span id="validate_name-120"><a href="#validate_name-120"><span class="linenos">120</span></a><span class="sd">    Raises:</span>
+</span><span id="validate_name-121"><a href="#validate_name-121"><span class="linenos">121</span></a><span class="sd">        None</span>
+</span><span id="validate_name-122"><a href="#validate_name-122"><span class="linenos">122</span></a>
+</span><span id="validate_name-123"><a href="#validate_name-123"><span class="linenos">123</span></a><span class="sd">    Example:</span>
+</span><span id="validate_name-124"><a href="#validate_name-124"><span class="linenos">124</span></a><span class="sd">        &gt;&gt;&gt; validate_name(&quot;John Doe&quot;)</span>
+</span><span id="validate_name-125"><a href="#validate_name-125"><span class="linenos">125</span></a><span class="sd">        True</span>
+</span><span id="validate_name-126"><a href="#validate_name-126"><span class="linenos">126</span></a><span class="sd">        &gt;&gt;&gt; validate_name(&quot;A&quot;)</span>
+</span><span id="validate_name-127"><a href="#validate_name-127"><span class="linenos">127</span></a><span class="sd">        False</span>
+</span><span id="validate_name-128"><a href="#validate_name-128"><span class="linenos">128</span></a><span class="sd">        &gt;&gt;&gt; validate_name(&quot;This is a very long name&quot;)</span>
+</span><span id="validate_name-129"><a href="#validate_name-129"><span class="linenos">129</span></a><span class="sd">        False</span>
+</span><span id="validate_name-130"><a href="#validate_name-130"><span class="linenos">130</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="validate_name-131"><a href="#validate_name-131"><span class="linenos">131</span></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">20</span> <span class="ow">or</span> <span class="mi">2</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+</span><span id="validate_name-132"><a href="#validate_name-132"><span class="linenos">132</span></a>        <span class="k">return</span> <span class="kc">False</span>
+</span><span id="validate_name-133"><a href="#validate_name-133"><span class="linenos">133</span></a>    <span class="k">return</span> <span class="kc">True</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Validates a name string.</p>
+
+<p>Args:
+    name (str): The name string to be validated.</p>
+
+<p>Returns:
+    bool: True if the name is valid, False otherwise.</p>
+
+<p>Raises:
+    None</p>
+
+<p>Example:</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>validate_name("John Doe")
+          True
+      validate_name("A")
+          False
+      validate_name("This is a very long name")
+          False</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+</div>
+
+
+                </section>
                 <section id="root">
                             <input id="root-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
@@ -292,18 +629,18 @@ app    </h1>
 
     </div>
     <a class="headerlink" href="#root"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="root-40"><a href="#root-40"><span class="linenos">40</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
-</span><span id="root-41"><a href="#root-41"><span class="linenos">41</span></a><span class="k">def</span> <span class="nf">root</span><span class="p">():</span>
-</span><span id="root-42"><a href="#root-42"><span class="linenos">42</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="root-43"><a href="#root-43"><span class="linenos">43</span></a><span class="sd">    Route for the root URL (&quot;/&quot;).</span>
-</span><span id="root-44"><a href="#root-44"><span class="linenos">44</span></a>
-</span><span id="root-45"><a href="#root-45"><span class="linenos">45</span></a><span class="sd">    Returns:</span>
-</span><span id="root-46"><a href="#root-46"><span class="linenos">46</span></a><span class="sd">        str: A string with a greeting message.</span>
-</span><span id="root-47"><a href="#root-47"><span class="linenos">47</span></a>
-</span><span id="root-48"><a href="#root-48"><span class="linenos">48</span></a><span class="sd">    Raises:</span>
-</span><span id="root-49"><a href="#root-49"><span class="linenos">49</span></a><span class="sd">        None</span>
-</span><span id="root-50"><a href="#root-50"><span class="linenos">50</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="root-51"><a href="#root-51"><span class="linenos">51</span></a>    <span class="k">return</span> <span class="s2">&quot;&lt;h1&gt;:)&lt;/h1&gt;&quot;</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="root-135"><a href="#root-135"><span class="linenos">135</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+</span><span id="root-136"><a href="#root-136"><span class="linenos">136</span></a><span class="k">def</span> <span class="nf">root</span><span class="p">():</span>
+</span><span id="root-137"><a href="#root-137"><span class="linenos">137</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="root-138"><a href="#root-138"><span class="linenos">138</span></a><span class="sd">    Route for the root URL (&quot;/&quot;).</span>
+</span><span id="root-139"><a href="#root-139"><span class="linenos">139</span></a>
+</span><span id="root-140"><a href="#root-140"><span class="linenos">140</span></a><span class="sd">    Returns:</span>
+</span><span id="root-141"><a href="#root-141"><span class="linenos">141</span></a><span class="sd">        str: A string with a greeting message.</span>
+</span><span id="root-142"><a href="#root-142"><span class="linenos">142</span></a>
+</span><span id="root-143"><a href="#root-143"><span class="linenos">143</span></a><span class="sd">    Raises:</span>
+</span><span id="root-144"><a href="#root-144"><span class="linenos">144</span></a><span class="sd">        None</span>
+</span><span id="root-145"><a href="#root-145"><span class="linenos">145</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="root-146"><a href="#root-146"><span class="linenos">146</span></a>    <span class="k">return</span> <span class="s2">&quot;&lt;h1&gt;:)&lt;/h1&gt;&quot;</span>
 </span></pre></div>
 
 
@@ -330,22 +667,22 @@ app    </h1>
 
     </div>
     <a class="headerlink" href="#get_highscores"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="get_highscores-53"><a href="#get_highscores-53"><span class="linenos">53</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/api/highscores&quot;</span><span class="p">)</span>
-</span><span id="get_highscores-54"><a href="#get_highscores-54"><span class="linenos">54</span></a><span class="k">def</span> <span class="nf">get_highscores</span><span class="p">():</span>
-</span><span id="get_highscores-55"><a href="#get_highscores-55"><span class="linenos">55</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="get_highscores-56"><a href="#get_highscores-56"><span class="linenos">56</span></a><span class="sd">    Route for getting highscores via API.</span>
-</span><span id="get_highscores-57"><a href="#get_highscores-57"><span class="linenos">57</span></a>
-</span><span id="get_highscores-58"><a href="#get_highscores-58"><span class="linenos">58</span></a><span class="sd">    Returns:</span>
-</span><span id="get_highscores-59"><a href="#get_highscores-59"><span class="linenos">59</span></a><span class="sd">        Response: A Flask Response object containing highscores data or an error message.</span>
-</span><span id="get_highscores-60"><a href="#get_highscores-60"><span class="linenos">60</span></a>
-</span><span id="get_highscores-61"><a href="#get_highscores-61"><span class="linenos">61</span></a><span class="sd">    Raises:</span>
-</span><span id="get_highscores-62"><a href="#get_highscores-62"><span class="linenos">62</span></a><span class="sd">        None</span>
-</span><span id="get_highscores-63"><a href="#get_highscores-63"><span class="linenos">63</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="get_highscores-64"><a href="#get_highscores-64"><span class="linenos">64</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
-</span><span id="get_highscores-65"><a href="#get_highscores-65"><span class="linenos">65</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
-</span><span id="get_highscores-66"><a href="#get_highscores-66"><span class="linenos">66</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
-</span><span id="get_highscores-67"><a href="#get_highscores-67"><span class="linenos">67</span></a>    <span class="n">highscores</span> <span class="o">=</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">fetch_highscores</span><span class="p">())</span>
-</span><span id="get_highscores-68"><a href="#get_highscores-68"><span class="linenos">68</span></a>    <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">highscores</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="get_highscores-148"><a href="#get_highscores-148"><span class="linenos">148</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/api/highscores&quot;</span><span class="p">)</span>
+</span><span id="get_highscores-149"><a href="#get_highscores-149"><span class="linenos">149</span></a><span class="k">def</span> <span class="nf">get_highscores</span><span class="p">():</span>
+</span><span id="get_highscores-150"><a href="#get_highscores-150"><span class="linenos">150</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="get_highscores-151"><a href="#get_highscores-151"><span class="linenos">151</span></a><span class="sd">    Route for getting highscores via API.</span>
+</span><span id="get_highscores-152"><a href="#get_highscores-152"><span class="linenos">152</span></a>
+</span><span id="get_highscores-153"><a href="#get_highscores-153"><span class="linenos">153</span></a><span class="sd">    Returns:</span>
+</span><span id="get_highscores-154"><a href="#get_highscores-154"><span class="linenos">154</span></a><span class="sd">        Response: A Flask Response object containing highscores data or an error message.</span>
+</span><span id="get_highscores-155"><a href="#get_highscores-155"><span class="linenos">155</span></a>
+</span><span id="get_highscores-156"><a href="#get_highscores-156"><span class="linenos">156</span></a><span class="sd">    Raises:</span>
+</span><span id="get_highscores-157"><a href="#get_highscores-157"><span class="linenos">157</span></a><span class="sd">        None</span>
+</span><span id="get_highscores-158"><a href="#get_highscores-158"><span class="linenos">158</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="get_highscores-159"><a href="#get_highscores-159"><span class="linenos">159</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
+</span><span id="get_highscores-160"><a href="#get_highscores-160"><span class="linenos">160</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
+</span><span id="get_highscores-161"><a href="#get_highscores-161"><span class="linenos">161</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
+</span><span id="get_highscores-162"><a href="#get_highscores-162"><span class="linenos">162</span></a>    <span class="n">highscores</span> <span class="o">=</span> <span class="n">fetch_highscores_from_firebase</span><span class="p">()</span>
+</span><span id="get_highscores-163"><a href="#get_highscores-163"><span class="linenos">163</span></a>    <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">highscores</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -372,32 +709,28 @@ app    </h1>
 
     </div>
     <a class="headerlink" href="#get_players_highscore"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="get_players_highscore-70"><a href="#get_players_highscore-70"><span class="linenos">70</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/highscores/&lt;int:the_id&gt;&#39;</span><span class="p">)</span>
-</span><span id="get_players_highscore-71"><a href="#get_players_highscore-71"><span class="linenos">71</span></a><span class="k">def</span> <span class="nf">get_players_highscore</span><span class="p">(</span><span class="n">the_id</span><span class="p">):</span>
-</span><span id="get_players_highscore-72"><a href="#get_players_highscore-72"><span class="linenos">72</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="get_players_highscore-73"><a href="#get_players_highscore-73"><span class="linenos">73</span></a><span class="sd">    Route for getting a specific player&#39;s highscore via API.</span>
-</span><span id="get_players_highscore-74"><a href="#get_players_highscore-74"><span class="linenos">74</span></a>
-</span><span id="get_players_highscore-75"><a href="#get_players_highscore-75"><span class="linenos">75</span></a><span class="sd">    Args:</span>
-</span><span id="get_players_highscore-76"><a href="#get_players_highscore-76"><span class="linenos">76</span></a><span class="sd">        the_id (int): The ID of the player.</span>
-</span><span id="get_players_highscore-77"><a href="#get_players_highscore-77"><span class="linenos">77</span></a>
-</span><span id="get_players_highscore-78"><a href="#get_players_highscore-78"><span class="linenos">78</span></a><span class="sd">    Returns:</span>
-</span><span id="get_players_highscore-79"><a href="#get_players_highscore-79"><span class="linenos">79</span></a><span class="sd">        Response: A Flask Response object containing the player&#39;s highscore data or an error message.</span>
-</span><span id="get_players_highscore-80"><a href="#get_players_highscore-80"><span class="linenos">80</span></a>
-</span><span id="get_players_highscore-81"><a href="#get_players_highscore-81"><span class="linenos">81</span></a><span class="sd">    Raises:</span>
-</span><span id="get_players_highscore-82"><a href="#get_players_highscore-82"><span class="linenos">82</span></a><span class="sd">        NotFound: If the player with the given ID is not found.</span>
-</span><span id="get_players_highscore-83"><a href="#get_players_highscore-83"><span class="linenos">83</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="get_players_highscore-84"><a href="#get_players_highscore-84"><span class="linenos">84</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
-</span><span id="get_players_highscore-85"><a href="#get_players_highscore-85"><span class="linenos">85</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
-</span><span id="get_players_highscore-86"><a href="#get_players_highscore-86"><span class="linenos">86</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
-</span><span id="get_players_highscore-87"><a href="#get_players_highscore-87"><span class="linenos">87</span></a>    <span class="n">players_data</span> <span class="o">=</span> <span class="n">fetch_highscore</span><span class="p">(</span><span class="n">the_id</span><span class="p">)</span>
-</span><span id="get_players_highscore-88"><a href="#get_players_highscore-88"><span class="linenos">88</span></a>    <span class="k">if</span> <span class="n">players_data</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="get_players_highscore-89"><a href="#get_players_highscore-89"><span class="linenos">89</span></a>        <span class="c1"># if player with id given as argument is found,</span>
-</span><span id="get_players_highscore-90"><a href="#get_players_highscore-90"><span class="linenos">90</span></a>        <span class="c1"># then a new dict object will be created,</span>
-</span><span id="get_players_highscore-91"><a href="#get_players_highscore-91"><span class="linenos">91</span></a>        <span class="c1"># which contains only id, name and overall highscore</span>
-</span><span id="get_players_highscore-92"><a href="#get_players_highscore-92"><span class="linenos">92</span></a>        <span class="c1"># from the data</span>
-</span><span id="get_players_highscore-93"><a href="#get_players_highscore-93"><span class="linenos">93</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="n">players_data</span><span class="p">),</span> <span class="mi">200</span><span class="p">)</span>
-</span><span id="get_players_highscore-94"><a href="#get_players_highscore-94"><span class="linenos">94</span></a>    <span class="k">else</span><span class="p">:</span>
-</span><span id="get_players_highscore-95"><a href="#get_players_highscore-95"><span class="linenos">95</span></a>        <span class="n">abort</span><span class="p">(</span><span class="mi">404</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="get_players_highscore-165"><a href="#get_players_highscore-165"><span class="linenos">165</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/highscores/&lt;int:the_id&gt;&#39;</span><span class="p">)</span>
+</span><span id="get_players_highscore-166"><a href="#get_players_highscore-166"><span class="linenos">166</span></a><span class="k">def</span> <span class="nf">get_players_highscore</span><span class="p">(</span><span class="n">the_id</span><span class="p">):</span>
+</span><span id="get_players_highscore-167"><a href="#get_players_highscore-167"><span class="linenos">167</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="get_players_highscore-168"><a href="#get_players_highscore-168"><span class="linenos">168</span></a><span class="sd">    Route for getting a specific player&#39;s highscore via API.</span>
+</span><span id="get_players_highscore-169"><a href="#get_players_highscore-169"><span class="linenos">169</span></a>
+</span><span id="get_players_highscore-170"><a href="#get_players_highscore-170"><span class="linenos">170</span></a><span class="sd">    Args:</span>
+</span><span id="get_players_highscore-171"><a href="#get_players_highscore-171"><span class="linenos">171</span></a><span class="sd">        the_id (int): The ID of the player.</span>
+</span><span id="get_players_highscore-172"><a href="#get_players_highscore-172"><span class="linenos">172</span></a>
+</span><span id="get_players_highscore-173"><a href="#get_players_highscore-173"><span class="linenos">173</span></a><span class="sd">    Returns:</span>
+</span><span id="get_players_highscore-174"><a href="#get_players_highscore-174"><span class="linenos">174</span></a><span class="sd">        Response: A Flask Response object containing the player&#39;s highscore data or an error message.</span>
+</span><span id="get_players_highscore-175"><a href="#get_players_highscore-175"><span class="linenos">175</span></a>
+</span><span id="get_players_highscore-176"><a href="#get_players_highscore-176"><span class="linenos">176</span></a><span class="sd">    Raises:</span>
+</span><span id="get_players_highscore-177"><a href="#get_players_highscore-177"><span class="linenos">177</span></a><span class="sd">        NotFound: If the player with the given ID is not found.</span>
+</span><span id="get_players_highscore-178"><a href="#get_players_highscore-178"><span class="linenos">178</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="get_players_highscore-179"><a href="#get_players_highscore-179"><span class="linenos">179</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
+</span><span id="get_players_highscore-180"><a href="#get_players_highscore-180"><span class="linenos">180</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
+</span><span id="get_players_highscore-181"><a href="#get_players_highscore-181"><span class="linenos">181</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
+</span><span id="get_players_highscore-182"><a href="#get_players_highscore-182"><span class="linenos">182</span></a>    <span class="n">highscore</span> <span class="o">=</span> <span class="n">fetch_a_highscore_based_on_id</span><span class="p">(</span><span class="n">the_id</span><span class="p">,</span> <span class="n">fetch_highscores_from_firebase</span><span class="p">())</span>
+</span><span id="get_players_highscore-183"><a href="#get_players_highscore-183"><span class="linenos">183</span></a>    <span class="k">if</span> <span class="n">highscore</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="get_players_highscore-184"><a href="#get_players_highscore-184"><span class="linenos">184</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="n">highscore</span><span class="p">),</span> <span class="mi">200</span><span class="p">)</span>
+</span><span id="get_players_highscore-185"><a href="#get_players_highscore-185"><span class="linenos">185</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="get_players_highscore-186"><a href="#get_players_highscore-186"><span class="linenos">186</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">({</span><span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="s1">&#39;Player not found.&#39;</span><span class="p">}),</span> <span class="mi">404</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -427,26 +760,43 @@ app    </h1>
 
     </div>
     <a class="headerlink" href="#add_highscore"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="add_highscore-99"><a href="#add_highscore-99"><span class="linenos"> 99</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/api/highscores&quot;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
-</span><span id="add_highscore-100"><a href="#add_highscore-100"><span class="linenos">100</span></a><span class="k">def</span> <span class="nf">add_highscore</span><span class="p">():</span>
-</span><span id="add_highscore-101"><a href="#add_highscore-101"><span class="linenos">101</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="add_highscore-102"><a href="#add_highscore-102"><span class="linenos">102</span></a><span class="sd">    Route for adding a player&#39;s highscore via API.</span>
-</span><span id="add_highscore-103"><a href="#add_highscore-103"><span class="linenos">103</span></a>
-</span><span id="add_highscore-104"><a href="#add_highscore-104"><span class="linenos">104</span></a><span class="sd">    Returns:</span>
-</span><span id="add_highscore-105"><a href="#add_highscore-105"><span class="linenos">105</span></a><span class="sd">        Response: A Flask Response object indicating success or failure of the request.</span>
-</span><span id="add_highscore-106"><a href="#add_highscore-106"><span class="linenos">106</span></a>
-</span><span id="add_highscore-107"><a href="#add_highscore-107"><span class="linenos">107</span></a><span class="sd">    Raises:</span>
-</span><span id="add_highscore-108"><a href="#add_highscore-108"><span class="linenos">108</span></a><span class="sd">        None</span>
-</span><span id="add_highscore-109"><a href="#add_highscore-109"><span class="linenos">109</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="add_highscore-110"><a href="#add_highscore-110"><span class="linenos">110</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
-</span><span id="add_highscore-111"><a href="#add_highscore-111"><span class="linenos">111</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
-</span><span id="add_highscore-112"><a href="#add_highscore-112"><span class="linenos">112</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
-</span><span id="add_highscore-113"><a href="#add_highscore-113"><span class="linenos">113</span></a>    <span class="c1"># the data sent via post request is e.g. {&#39;name&#39;: &#39;dummy&#39;, &#39;overall_highscore&#39;: 100}</span>
-</span><span id="add_highscore-114"><a href="#add_highscore-114"><span class="linenos">114</span></a>    <span class="n">sent_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-</span><span id="add_highscore-115"><a href="#add_highscore-115"><span class="linenos">115</span></a>    <span class="k">if</span> <span class="n">validate_name</span><span class="p">(</span><span class="n">sent_data</span><span class="p">[</span><span class="s1">&#39;player_name&#39;</span><span class="p">])</span> <span class="o">!=</span> <span class="kc">True</span><span class="p">:</span>
-</span><span id="add_highscore-116"><a href="#add_highscore-116"><span class="linenos">116</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;Name must be be at least 3 characters and max 20 characters long&quot;</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
-</span><span id="add_highscore-117"><a href="#add_highscore-117"><span class="linenos">117</span></a>    <span class="n">save_highscore</span><span class="p">(</span><span class="n">sent_data</span><span class="p">[</span><span class="s1">&#39;player_name&#39;</span><span class="p">],</span> <span class="n">sent_data</span><span class="p">[</span><span class="s1">&#39;overall_highscore&#39;</span><span class="p">])</span>
-</span><span id="add_highscore-118"><a href="#add_highscore-118"><span class="linenos">118</span></a>    <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">201</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="add_highscore-188"><a href="#add_highscore-188"><span class="linenos">188</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/api/highscores&quot;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+</span><span id="add_highscore-189"><a href="#add_highscore-189"><span class="linenos">189</span></a><span class="k">def</span> <span class="nf">add_highscore</span><span class="p">():</span>
+</span><span id="add_highscore-190"><a href="#add_highscore-190"><span class="linenos">190</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="add_highscore-191"><a href="#add_highscore-191"><span class="linenos">191</span></a><span class="sd">    Route for adding a player&#39;s highscore via API.</span>
+</span><span id="add_highscore-192"><a href="#add_highscore-192"><span class="linenos">192</span></a>
+</span><span id="add_highscore-193"><a href="#add_highscore-193"><span class="linenos">193</span></a><span class="sd">    Returns:</span>
+</span><span id="add_highscore-194"><a href="#add_highscore-194"><span class="linenos">194</span></a><span class="sd">        Response: A Flask Response object indicating success or failure of the request.</span>
+</span><span id="add_highscore-195"><a href="#add_highscore-195"><span class="linenos">195</span></a>
+</span><span id="add_highscore-196"><a href="#add_highscore-196"><span class="linenos">196</span></a><span class="sd">    Raises:</span>
+</span><span id="add_highscore-197"><a href="#add_highscore-197"><span class="linenos">197</span></a><span class="sd">        None</span>
+</span><span id="add_highscore-198"><a href="#add_highscore-198"><span class="linenos">198</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="add_highscore-199"><a href="#add_highscore-199"><span class="linenos">199</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
+</span><span id="add_highscore-200"><a href="#add_highscore-200"><span class="linenos">200</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
+</span><span id="add_highscore-201"><a href="#add_highscore-201"><span class="linenos">201</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
+</span><span id="add_highscore-202"><a href="#add_highscore-202"><span class="linenos">202</span></a>    <span class="c1"># the data sent via post request is e.g. {&#39;player_name&#39;: &#39;dummy&#39;, &#39;overall_highscore&#39;: 100}</span>
+</span><span id="add_highscore-203"><a href="#add_highscore-203"><span class="linenos">203</span></a>    <span class="n">received_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+</span><span id="add_highscore-204"><a href="#add_highscore-204"><span class="linenos">204</span></a>    <span class="k">if</span> <span class="n">validate_name</span><span class="p">(</span><span class="n">received_data</span><span class="p">[</span><span class="s1">&#39;player_name&#39;</span><span class="p">])</span> <span class="o">!=</span> <span class="kc">True</span><span class="p">:</span>
+</span><span id="add_highscore-205"><a href="#add_highscore-205"><span class="linenos">205</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;Name must be be at least 3 characters and max 20 characters long&quot;</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
+</span><span id="add_highscore-206"><a href="#add_highscore-206"><span class="linenos">206</span></a>    <span class="n">highscores</span> <span class="o">=</span> <span class="n">fetch_highscores_from_firebase</span><span class="p">()</span>
+</span><span id="add_highscore-207"><a href="#add_highscore-207"><span class="linenos">207</span></a>    <span class="c1"># create id for highscore</span>
+</span><span id="add_highscore-208"><a href="#add_highscore-208"><span class="linenos">208</span></a>    <span class="c1"># new highscore id is initially array length + 1</span>
+</span><span id="add_highscore-209"><a href="#add_highscore-209"><span class="linenos">209</span></a>    <span class="nb">id</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">highscores</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+</span><span id="add_highscore-210"><a href="#add_highscore-210"><span class="linenos">210</span></a>    <span class="c1"># check if there is a duplicate id</span>
+</span><span id="add_highscore-211"><a href="#add_highscore-211"><span class="linenos">211</span></a>    <span class="n">duplicate</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="add_highscore-212"><a href="#add_highscore-212"><span class="linenos">212</span></a>    <span class="k">while</span> <span class="n">duplicate</span><span class="p">:</span>
+</span><span id="add_highscore-213"><a href="#add_highscore-213"><span class="linenos">213</span></a>        <span class="n">player_data</span> <span class="o">=</span> <span class="n">fetch_a_highscore_based_on_id</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">highscores</span><span class="p">)</span>
+</span><span id="add_highscore-214"><a href="#add_highscore-214"><span class="linenos">214</span></a>        <span class="k">if</span> <span class="n">player_data</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="add_highscore-215"><a href="#add_highscore-215"><span class="linenos">215</span></a>            <span class="nb">id</span> <span class="o">=</span> <span class="nb">id</span> <span class="o">+</span> <span class="mi">1</span>
+</span><span id="add_highscore-216"><a href="#add_highscore-216"><span class="linenos">216</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="add_highscore-217"><a href="#add_highscore-217"><span class="linenos">217</span></a>            <span class="n">duplicate</span> <span class="o">=</span> <span class="kc">False</span>
+</span><span id="add_highscore-218"><a href="#add_highscore-218"><span class="linenos">218</span></a>    <span class="n">new_highscore</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="nb">id</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">received_data</span><span class="p">[</span><span class="s1">&#39;player_name&#39;</span><span class="p">],</span> <span class="s2">&quot;highscore&quot;</span><span class="p">:</span> <span class="n">received_data</span><span class="p">[</span><span class="s1">&#39;overall_highscore&#39;</span><span class="p">]}</span>
+</span><span id="add_highscore-219"><a href="#add_highscore-219"><span class="linenos">219</span></a>    <span class="c1"># append new highscore to highscores list and jsonify it</span>
+</span><span id="add_highscore-220"><a href="#add_highscore-220"><span class="linenos">220</span></a>    <span class="n">highscores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_highscore</span><span class="p">)</span>
+</span><span id="add_highscore-221"><a href="#add_highscore-221"><span class="linenos">221</span></a>    <span class="n">highscores_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">highscores</span><span class="p">)</span>
+</span><span id="add_highscore-222"><a href="#add_highscore-222"><span class="linenos">222</span></a>    <span class="c1"># Upload the updated highscores file to Firebase Storage</span>
+</span><span id="add_highscore-223"><a href="#add_highscore-223"><span class="linenos">223</span></a>    <span class="n">upload_to_firebase</span><span class="p">(</span><span class="n">content</span> <span class="o">=</span> <span class="n">highscores_json</span><span class="p">)</span>
+</span><span id="add_highscore-224"><a href="#add_highscore-224"><span class="linenos">224</span></a>    <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">({</span><span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="s1">&#39;Highscore added successfully!&#39;</span><span class="p">}),</span> <span class="mi">201</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -473,29 +823,36 @@ app    </h1>
 
     </div>
     <a class="headerlink" href="#delete_highscore"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="delete_highscore-120"><a href="#delete_highscore-120"><span class="linenos">120</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/highscores/&lt;int:the_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;DELETE&#39;</span><span class="p">])</span>
-</span><span id="delete_highscore-121"><a href="#delete_highscore-121"><span class="linenos">121</span></a><span class="k">def</span> <span class="nf">delete_highscore</span><span class="p">(</span><span class="n">the_id</span><span class="p">):</span>
-</span><span id="delete_highscore-122"><a href="#delete_highscore-122"><span class="linenos">122</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="delete_highscore-123"><a href="#delete_highscore-123"><span class="linenos">123</span></a><span class="sd">    Deletes a highscore entry for a player with the given ID.</span>
-</span><span id="delete_highscore-124"><a href="#delete_highscore-124"><span class="linenos">124</span></a>
-</span><span id="delete_highscore-125"><a href="#delete_highscore-125"><span class="linenos">125</span></a><span class="sd">    Args:</span>
-</span><span id="delete_highscore-126"><a href="#delete_highscore-126"><span class="linenos">126</span></a><span class="sd">        the_id (int): The ID of the player whose highscore is to be deleted.</span>
-</span><span id="delete_highscore-127"><a href="#delete_highscore-127"><span class="linenos">127</span></a>
-</span><span id="delete_highscore-128"><a href="#delete_highscore-128"><span class="linenos">128</span></a><span class="sd">    Returns:</span>
-</span><span id="delete_highscore-129"><a href="#delete_highscore-129"><span class="linenos">129</span></a><span class="sd">        Response: A Flask response object with a 204 status code on successful deletion,</span>
-</span><span id="delete_highscore-130"><a href="#delete_highscore-130"><span class="linenos">130</span></a><span class="sd">        or a response object with 404 status code if the player ID is not found.</span>
-</span><span id="delete_highscore-131"><a href="#delete_highscore-131"><span class="linenos">131</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="delete_highscore-132"><a href="#delete_highscore-132"><span class="linenos">132</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
-</span><span id="delete_highscore-133"><a href="#delete_highscore-133"><span class="linenos">133</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
-</span><span id="delete_highscore-134"><a href="#delete_highscore-134"><span class="linenos">134</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
-</span><span id="delete_highscore-135"><a href="#delete_highscore-135"><span class="linenos">135</span></a>    <span class="c1"># Before deletion, it has to be made sure that</span>
-</span><span id="delete_highscore-136"><a href="#delete_highscore-136"><span class="linenos">136</span></a>    <span class="c1"># the id of a player exists. Otherwise, a response</span>
-</span><span id="delete_highscore-137"><a href="#delete_highscore-137"><span class="linenos">137</span></a>    <span class="c1"># with status code 404 will be sent</span>
-</span><span id="delete_highscore-138"><a href="#delete_highscore-138"><span class="linenos">138</span></a>    <span class="n">player_data</span> <span class="o">=</span> <span class="n">fetch_highscore</span><span class="p">(</span><span class="n">the_id</span><span class="p">)</span>
-</span><span id="delete_highscore-139"><a href="#delete_highscore-139"><span class="linenos">139</span></a>    <span class="k">if</span> <span class="n">player_data</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="delete_highscore-140"><a href="#delete_highscore-140"><span class="linenos">140</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">404</span><span class="p">)</span>
-</span><span id="delete_highscore-141"><a href="#delete_highscore-141"><span class="linenos">141</span></a>    <span class="n">remove_highscore</span><span class="p">(</span><span class="n">the_id</span><span class="p">)</span>
-</span><span id="delete_highscore-142"><a href="#delete_highscore-142"><span class="linenos">142</span></a>    <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">204</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="delete_highscore-226"><a href="#delete_highscore-226"><span class="linenos">226</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/api/highscores/&lt;int:the_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;DELETE&#39;</span><span class="p">])</span>
+</span><span id="delete_highscore-227"><a href="#delete_highscore-227"><span class="linenos">227</span></a><span class="k">def</span> <span class="nf">delete_highscore</span><span class="p">(</span><span class="n">the_id</span><span class="p">):</span>
+</span><span id="delete_highscore-228"><a href="#delete_highscore-228"><span class="linenos">228</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="delete_highscore-229"><a href="#delete_highscore-229"><span class="linenos">229</span></a><span class="sd">    Deletes a highscore entry for a player with the given ID.</span>
+</span><span id="delete_highscore-230"><a href="#delete_highscore-230"><span class="linenos">230</span></a>
+</span><span id="delete_highscore-231"><a href="#delete_highscore-231"><span class="linenos">231</span></a><span class="sd">    Args:</span>
+</span><span id="delete_highscore-232"><a href="#delete_highscore-232"><span class="linenos">232</span></a><span class="sd">        the_id (int): The ID of the player whose highscore is to be deleted.</span>
+</span><span id="delete_highscore-233"><a href="#delete_highscore-233"><span class="linenos">233</span></a>
+</span><span id="delete_highscore-234"><a href="#delete_highscore-234"><span class="linenos">234</span></a><span class="sd">    Returns:</span>
+</span><span id="delete_highscore-235"><a href="#delete_highscore-235"><span class="linenos">235</span></a><span class="sd">        Response: A Flask response object with a 204 status code on successful deletion,</span>
+</span><span id="delete_highscore-236"><a href="#delete_highscore-236"><span class="linenos">236</span></a><span class="sd">        or a response object with 404 status code if the player ID is not found.</span>
+</span><span id="delete_highscore-237"><a href="#delete_highscore-237"><span class="linenos">237</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="delete_highscore-238"><a href="#delete_highscore-238"><span class="linenos">238</span></a>    <span class="n">pw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pw&quot;</span><span class="p">)</span>
+</span><span id="delete_highscore-239"><a href="#delete_highscore-239"><span class="linenos">239</span></a>    <span class="k">if</span> <span class="p">(</span><span class="n">check_api_key</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">):</span>
+</span><span id="delete_highscore-240"><a href="#delete_highscore-240"><span class="linenos">240</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="n">jsonify</span><span class="p">(</span><span class="s2">&quot;You are unauthorized&quot;</span><span class="p">),</span> <span class="mi">401</span><span class="p">)</span>
+</span><span id="delete_highscore-241"><a href="#delete_highscore-241"><span class="linenos">241</span></a>    <span class="c1"># Before deletion, it has to be made sure that</span>
+</span><span id="delete_highscore-242"><a href="#delete_highscore-242"><span class="linenos">242</span></a>    <span class="c1"># the id of a player exists. Otherwise, a response</span>
+</span><span id="delete_highscore-243"><a href="#delete_highscore-243"><span class="linenos">243</span></a>    <span class="c1"># with status code 404 will be sent</span>
+</span><span id="delete_highscore-244"><a href="#delete_highscore-244"><span class="linenos">244</span></a>    <span class="n">highscores</span> <span class="o">=</span> <span class="n">fetch_highscores_from_firebase</span><span class="p">()</span>
+</span><span id="delete_highscore-245"><a href="#delete_highscore-245"><span class="linenos">245</span></a>    <span class="n">player_data</span> <span class="o">=</span> <span class="n">fetch_a_highscore_based_on_id</span><span class="p">(</span><span class="n">the_id</span><span class="p">,</span> <span class="n">highscores</span><span class="p">)</span>
+</span><span id="delete_highscore-246"><a href="#delete_highscore-246"><span class="linenos">246</span></a>    <span class="k">if</span> <span class="n">player_data</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="delete_highscore-247"><a href="#delete_highscore-247"><span class="linenos">247</span></a>        <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">404</span><span class="p">)</span>
+</span><span id="delete_highscore-248"><a href="#delete_highscore-248"><span class="linenos">248</span></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">highscores</span><span class="p">)):</span>
+</span><span id="delete_highscore-249"><a href="#delete_highscore-249"><span class="linenos">249</span></a>        <span class="k">if</span> <span class="n">highscores</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">the_id</span><span class="p">:</span>
+</span><span id="delete_highscore-250"><a href="#delete_highscore-250"><span class="linenos">250</span></a>            <span class="n">highscores</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+</span><span id="delete_highscore-251"><a href="#delete_highscore-251"><span class="linenos">251</span></a>            <span class="k">break</span>
+</span><span id="delete_highscore-252"><a href="#delete_highscore-252"><span class="linenos">252</span></a>    <span class="n">highscores_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">highscores</span><span class="p">)</span>
+</span><span id="delete_highscore-253"><a href="#delete_highscore-253"><span class="linenos">253</span></a>    <span class="c1"># Upload the updated highscores file to Firebase Storage</span>
+</span><span id="delete_highscore-254"><a href="#delete_highscore-254"><span class="linenos">254</span></a>    <span class="n">upload_to_firebase</span><span class="p">(</span><span class="n">content</span> <span class="o">=</span> <span class="n">highscores_json</span><span class="p">)</span>
+</span><span id="delete_highscore-255"><a href="#delete_highscore-255"><span class="linenos">255</span></a>    <span class="k">return</span> <span class="n">make_response</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">204</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -523,24 +880,54 @@ app    </h1>
 
     </div>
     <a class="headerlink" href="#show_highscores"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="show_highscores-144"><a href="#show_highscores-144"><span class="linenos">144</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/highscores&#39;</span><span class="p">)</span>
-</span><span id="show_highscores-145"><a href="#show_highscores-145"><span class="linenos">145</span></a><span class="k">def</span> <span class="nf">show_highscores</span><span class="p">():</span>
-</span><span id="show_highscores-146"><a href="#show_highscores-146"><span class="linenos">146</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="show_highscores-147"><a href="#show_highscores-147"><span class="linenos">147</span></a><span class="sd">    Renders the highscores page with optional sorting and limiting options.</span>
-</span><span id="show_highscores-148"><a href="#show_highscores-148"><span class="linenos">148</span></a>
-</span><span id="show_highscores-149"><a href="#show_highscores-149"><span class="linenos">149</span></a><span class="sd">    Returns:</span>
-</span><span id="show_highscores-150"><a href="#show_highscores-150"><span class="linenos">150</span></a><span class="sd">        Response: A Flask response object containing the rendered highscores page</span>
-</span><span id="show_highscores-151"><a href="#show_highscores-151"><span class="linenos">151</span></a><span class="sd">        with optional sorting and limiting options applied.</span>
-</span><span id="show_highscores-152"><a href="#show_highscores-152"><span class="linenos">152</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="show_highscores-153"><a href="#show_highscores-153"><span class="linenos">153</span></a>    <span class="c1"># The highscore page doesn&#39;t need password</span>
-</span><span id="show_highscores-154"><a href="#show_highscores-154"><span class="linenos">154</span></a>    <span class="n">limit</span> <span class="o">=</span> <span class="mi">100</span>
-</span><span id="show_highscores-155"><a href="#show_highscores-155"><span class="linenos">155</span></a>    <span class="n">sort</span> <span class="o">=</span> <span class="s2">&quot;desc&quot;</span>
-</span><span id="show_highscores-156"><a href="#show_highscores-156"><span class="linenos">156</span></a>    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sort&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="show_highscores-157"><a href="#show_highscores-157"><span class="linenos">157</span></a>        <span class="n">sort</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sort&quot;</span><span class="p">)</span>
-</span><span id="show_highscores-158"><a href="#show_highscores-158"><span class="linenos">158</span></a>    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;limit&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="show_highscores-159"><a href="#show_highscores-159"><span class="linenos">159</span></a>        <span class="n">limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;limit&quot;</span><span class="p">))</span>
-</span><span id="show_highscores-160"><a href="#show_highscores-160"><span class="linenos">160</span></a>    <span class="n">highscores</span> <span class="o">=</span> <span class="n">fetch_highscores</span><span class="p">(</span><span class="n">limit</span><span class="p">,</span> <span class="n">sort</span><span class="p">)</span>
-</span><span id="show_highscores-161"><a href="#show_highscores-161"><span class="linenos">161</span></a>    <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s2">&quot;highscores.html&quot;</span><span class="p">,</span> <span class="n">highscores</span><span class="o">=</span><span class="n">highscores</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="show_highscores-257"><a href="#show_highscores-257"><span class="linenos">257</span></a><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/highscores&#39;</span><span class="p">)</span>
+</span><span id="show_highscores-258"><a href="#show_highscores-258"><span class="linenos">258</span></a><span class="k">def</span> <span class="nf">show_highscores</span><span class="p">():</span>
+</span><span id="show_highscores-259"><a href="#show_highscores-259"><span class="linenos">259</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="show_highscores-260"><a href="#show_highscores-260"><span class="linenos">260</span></a><span class="sd">    Renders the highscores page with optional sorting and limiting options.</span>
+</span><span id="show_highscores-261"><a href="#show_highscores-261"><span class="linenos">261</span></a>
+</span><span id="show_highscores-262"><a href="#show_highscores-262"><span class="linenos">262</span></a><span class="sd">    Returns:</span>
+</span><span id="show_highscores-263"><a href="#show_highscores-263"><span class="linenos">263</span></a><span class="sd">        Response: A Flask response object containing the rendered highscores page</span>
+</span><span id="show_highscores-264"><a href="#show_highscores-264"><span class="linenos">264</span></a><span class="sd">        with optional sorting and limiting options applied.</span>
+</span><span id="show_highscores-265"><a href="#show_highscores-265"><span class="linenos">265</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="show_highscores-266"><a href="#show_highscores-266"><span class="linenos">266</span></a>    <span class="c1"># check, if there is a sort attribute with request</span>
+</span><span id="show_highscores-267"><a href="#show_highscores-267"><span class="linenos">267</span></a>    <span class="n">limit</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span id="show_highscores-268"><a href="#show_highscores-268"><span class="linenos">268</span></a>    <span class="n">sort</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+</span><span id="show_highscores-269"><a href="#show_highscores-269"><span class="linenos">269</span></a>    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sort&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="show_highscores-270"><a href="#show_highscores-270"><span class="linenos">270</span></a>        <span class="n">sort</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sort&quot;</span><span class="p">)</span>
+</span><span id="show_highscores-271"><a href="#show_highscores-271"><span class="linenos">271</span></a>    <span class="c1"># check, if there is a limit attribute with request</span>
+</span><span id="show_highscores-272"><a href="#show_highscores-272"><span class="linenos">272</span></a>    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;limit&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="show_highscores-273"><a href="#show_highscores-273"><span class="linenos">273</span></a>        <span class="n">limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;limit&quot;</span><span class="p">))</span>
+</span><span id="show_highscores-274"><a href="#show_highscores-274"><span class="linenos">274</span></a>    <span class="c1">#  check, if limit is within 1-100 range, else defaults to 100</span>
+</span><span id="show_highscores-275"><a href="#show_highscores-275"><span class="linenos">275</span></a>    <span class="k">if</span> <span class="n">limit</span> <span class="o">&gt;</span> <span class="mi">100</span> <span class="ow">or</span> <span class="n">limit</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="show_highscores-276"><a href="#show_highscores-276"><span class="linenos">276</span></a>        <span class="n">limit</span> <span class="o">=</span> <span class="mi">100</span>
+</span><span id="show_highscores-277"><a href="#show_highscores-277"><span class="linenos">277</span></a>    <span class="c1"># if sort is not &quot;none&quot;, &quot;asc&quot;, or &quot;desc&quot;, then it will be &quot;desc&quot;</span>
+</span><span id="show_highscores-278"><a href="#show_highscores-278"><span class="linenos">278</span></a>    <span class="c1"># by default, meaning the highscores list will be shown in descending order,</span>
+</span><span id="show_highscores-279"><a href="#show_highscores-279"><span class="linenos">279</span></a>    <span class="c1"># meaning highest score is first, and so on.</span>
+</span><span id="show_highscores-280"><a href="#show_highscores-280"><span class="linenos">280</span></a>    <span class="k">if</span> <span class="n">sort</span> <span class="o">!=</span> <span class="s2">&quot;desc&quot;</span><span class="p">:</span>
+</span><span id="show_highscores-281"><a href="#show_highscores-281"><span class="linenos">281</span></a>        <span class="k">if</span> <span class="n">sort</span> <span class="o">!=</span> <span class="s2">&quot;asc&quot;</span><span class="p">:</span>
+</span><span id="show_highscores-282"><a href="#show_highscores-282"><span class="linenos">282</span></a>            <span class="k">if</span> <span class="n">sort</span> <span class="o">!=</span> <span class="s2">&quot;none&quot;</span><span class="p">:</span>
+</span><span id="show_highscores-283"><a href="#show_highscores-283"><span class="linenos">283</span></a>                <span class="n">sort</span> <span class="o">=</span> <span class="s2">&quot;desc&quot;</span>
+</span><span id="show_highscores-284"><a href="#show_highscores-284"><span class="linenos">284</span></a>    <span class="c1"># download highscores from firebase</span>
+</span><span id="show_highscores-285"><a href="#show_highscores-285"><span class="linenos">285</span></a>    <span class="n">highscores</span> <span class="o">=</span> <span class="n">fetch_highscores_from_firebase</span><span class="p">()</span>
+</span><span id="show_highscores-286"><a href="#show_highscores-286"><span class="linenos">286</span></a>    <span class="c1"># this variable determines whether the max range of list objects</span>
+</span><span id="show_highscores-287"><a href="#show_highscores-287"><span class="linenos">287</span></a>    <span class="c1"># is the limit or length of the list, dependent on whether the limit</span>
+</span><span id="show_highscores-288"><a href="#show_highscores-288"><span class="linenos">288</span></a>    <span class="c1"># is greater than the length of the list or not</span>
+</span><span id="show_highscores-289"><a href="#show_highscores-289"><span class="linenos">289</span></a>    <span class="n">max_range</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">highscores</span><span class="p">)</span> <span class="k">if</span> <span class="n">limit</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">highscores</span><span class="p">)</span> <span class="k">else</span> <span class="n">limit</span>
+</span><span id="show_highscores-290"><a href="#show_highscores-290"><span class="linenos">290</span></a>    <span class="c1"># a list containing dicts will be returned</span>
+</span><span id="show_highscores-291"><a href="#show_highscores-291"><span class="linenos">291</span></a>    <span class="n">returned_highscores</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="show_highscores-292"><a href="#show_highscores-292"><span class="linenos">292</span></a>    <span class="k">if</span> <span class="n">sort</span> <span class="o">==</span> <span class="s2">&quot;none&quot;</span><span class="p">:</span>
+</span><span id="show_highscores-293"><a href="#show_highscores-293"><span class="linenos">293</span></a>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_range</span><span class="p">):</span>
+</span><span id="show_highscores-294"><a href="#show_highscores-294"><span class="linenos">294</span></a>            <span class="n">returned_highscores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">highscores</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+</span><span id="show_highscores-295"><a href="#show_highscores-295"><span class="linenos">295</span></a>    <span class="k">if</span> <span class="n">sort</span> <span class="o">==</span> <span class="s2">&quot;asc&quot;</span><span class="p">:</span>
+</span><span id="show_highscores-296"><a href="#show_highscores-296"><span class="linenos">296</span></a>        <span class="n">sorted_highscores</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">highscores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;highscore&#39;</span><span class="p">])</span>
+</span><span id="show_highscores-297"><a href="#show_highscores-297"><span class="linenos">297</span></a>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_range</span><span class="p">):</span>
+</span><span id="show_highscores-298"><a href="#show_highscores-298"><span class="linenos">298</span></a>            <span class="n">returned_highscores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sorted_highscores</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+</span><span id="show_highscores-299"><a href="#show_highscores-299"><span class="linenos">299</span></a>        <span class="k">return</span> <span class="n">highscores</span>
+</span><span id="show_highscores-300"><a href="#show_highscores-300"><span class="linenos">300</span></a>    <span class="k">if</span> <span class="n">sort</span> <span class="o">==</span> <span class="s2">&quot;desc&quot;</span><span class="p">:</span>
+</span><span id="show_highscores-301"><a href="#show_highscores-301"><span class="linenos">301</span></a>        <span class="n">sorted_highscores</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">highscores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;highscore&#39;</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="show_highscores-302"><a href="#show_highscores-302"><span class="linenos">302</span></a>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_range</span><span class="p">):</span>
+</span><span id="show_highscores-303"><a href="#show_highscores-303"><span class="linenos">303</span></a>            <span class="n">returned_highscores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sorted_highscores</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+</span><span id="show_highscores-304"><a href="#show_highscores-304"><span class="linenos">304</span></a>    <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s2">&quot;highscores.html&quot;</span><span class="p">,</span> <span class="n">highscores</span><span class="o">=</span><span class="n">returned_highscores</span><span class="p">)</span>
 </span></pre></div>
 
 
